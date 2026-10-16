@@ -5,7 +5,8 @@
 **Status: NNL statistical accuracy/stability, per-fit timing and whole-run peak
 RSS recorded; GRS results recorded with mixed/inconclusive precision outcomes;
 TSC recovery and MCP proposal-policy results recorded with no operational
-policy; per-configuration memory and NNP remain outstanding.**
+policy; NNP is preregistered with an executable runner, but its full study and
+per-configuration memory remain outstanding.**
 
 This design fixes the local simulation and approximation studies for the
 newly estimated grouped covariance, temporal scale, adaptive MCML and
@@ -21,7 +22,8 @@ October 2026. NNL results are
 reported in `docs/benchmarks/04_NEIGHBOR_LIKELIHOOD.md`; GRS results and the
 case-specific interpretation are in `03_GROUPED_SLOPE_RECOVERY_RESULTS.md`;
 TSC results are in `04_TEMPORAL_SCALE_RECOVERY_RESULTS.md`; MCP results are in
-`05_MCML_PROPOSAL_RESULTS.md`. NNP remains planned.
+`05_MCML_PROPOSAL_RESULTS.md`. The NNP runner, summarizer and validator are
+implemented; its full execution remains pending.
 
 Every run must record the SPmodels archive SHA-256, R/platform/BLAS details,
 full configuration, seeds, warnings, convergence codes, raw replicate values,
