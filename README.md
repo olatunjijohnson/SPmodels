@@ -34,6 +34,10 @@ case-specific results in `docs/validation/` before using those fitted
 extensions scientifically.
 The registered MCML proposal study likewise found no operational policy in
 its synthetic cases; no proposal setting is recommended.
+The registered nearest-predecessor prediction study passed its exact boundary
+and found case-specific budgets for four synthetic cases, but no registered
+budget passed the 225-row space-time target criteria; no universal budget is
+recommended. See `docs/validation/06_NEIGHBOR_PREDICTION_RESULTS.md`.
 
 Use this `Research/SPmodels` directory as the working master on each machine.
 Machine-specific absolute paths may differ between Linux and macOS; synced copies
@@ -55,6 +59,7 @@ only a delivery snapshot.
 | [Grouped-slope recovery results](docs/validation/03_GROUPED_SLOPE_RECOVERY_RESULTS.md) | Synthetic covariance recovery, mathematical checks and spatial-range diagnostics |
 | [Temporal-scale recovery results](docs/validation/04_TEMPORAL_SCALE_RECOVERY_RESULTS.md) | Non-Gaussian temporal recovery, boundary behavior and MCML repeat diagnostics |
 | [MCML proposal-policy results](docs/validation/05_MCML_PROPOSAL_RESULTS.md) | Independent-repeat, ESS, weight and adaptation outcomes; no policy passed |
+| [Nearest-predecessor prediction results](docs/validation/06_NEIGHBOR_PREDICTION_RESULTS.md) | Five-case bounded-memory joint-prediction study; no universal budget passed |
 | [Teaching and future models](docs/08_TEACHING_AND_FUTURE_MODELS.md) | Curriculum needs and model expansion |
 | [Distribution and CRAN](docs/09_DISTRIBUTION_AND_CRAN.md) | Release, installation and maintenance |
 | [Derivations and teaching data](docs/10_DERIVATIONS_AND_TEACHING_DATA.md) | Complete MSc-level derivations for every method and selected lsda datasets |

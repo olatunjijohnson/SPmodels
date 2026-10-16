@@ -1242,9 +1242,9 @@ The next work should proceed in dependency order.
 1. Measure externally observed peak RSS by NNL configuration and on additional
    supported platforms. Per-fit timings and the full-run peak RSS are recorded
    alongside archived statistical-accuracy and stability results in
-   the NNL benchmark report. GRS and TSC recovery studies are now recorded;
-   run the remaining registered MCP proposal-policy and NNP prediction
-   studies.
+   the NNL benchmark report. GRS, TSC, MCP and NNP studies are recorded;
+   MCML proposal redesign, reference comparisons and further cross-platform
+   measurements remain.
 2. The GRS spatial-range diagnostic found broad Hessian uncertainty, poor
    local interval coverage and estimated scales far from truth. The TSC cases
    reached their 400-attempt caps but were inconclusive: usable-fit rates were
@@ -1286,13 +1286,14 @@ The next work should proceed in dependency order.
    profiling identifies the appropriate granularity.
 3. Extend grid and boundary construction with consumer-specific schemas.
 4. Add consumer-specific regional target definitions where authorized.
-5. Evaluate the implemented bounded-memory nearest-predecessor joint draws
-   across defensible prediction orders and neighbor budgets; exact bounded-memory
-   pointwise prediction remains available through
-   `sp_predict_chunked()`. The NNL accuracy study found no general training
-   budget; per-configuration memory and cross-platform timing remain open.
-   Keep recommendations scenario-specific and optimize its R implementation
-   only from broader measured evidence.
+5. The registered nearest-predecessor prediction study is complete. Its
+   candidate budgets passed for four synthetic cases, but none passed the
+   225-row space-time target criteria; there is no universal budget. See the
+   full case-by-case results before using approximate joint draws.
+   Exact bounded-memory pointwise prediction remains available through
+   `sp_predict_chunked()`. NNL per-configuration memory and cross-platform
+   timing remain open; optimize either pure-R route only after broader
+   profiling identifies a defensible target.
 6. Extend the current target and diagnostic displays with reviewed
    publication/cartographic styling.
 

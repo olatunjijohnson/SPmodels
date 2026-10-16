@@ -1,0 +1,4 @@
+"case","grid_size","recommended_neighbors","status"
+"spacetime",25,10,"pass"
+"spacetime",100,40,"pass"
+"spacetime",225,,"no budget passed both orders"

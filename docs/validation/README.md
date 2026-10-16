@@ -22,3 +22,6 @@ The local recovery and approximation studies for newly implemented extensions
 are predeclared in
 [`02_RECOVERY_AND_APPROXIMATION_DESIGN.md`](02_RECOVERY_AND_APPROXIMATION_DESIGN.md).
 They do not replace the external reference cases in the initial matrix.
+
+The registered bounded-memory joint-prediction accuracy study is reported in
+[`06_NEIGHBOR_PREDICTION_RESULTS.md`](06_NEIGHBOR_PREDICTION_RESULTS.md).

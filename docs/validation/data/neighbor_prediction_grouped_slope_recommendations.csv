@@ -1,0 +1,4 @@
+"case","grid_size","recommended_neighbors","status"
+"grouped_slope",25,5,"pass"
+"grouped_slope",100,10,"pass"
+"grouped_slope",225,20,"pass"

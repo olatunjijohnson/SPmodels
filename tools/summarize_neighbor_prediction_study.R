@@ -1,7 +1,15 @@
 args <- commandArgs(trailingOnly = TRUE)
-input_paths <- if (length(args) >= 1L) args else
-  "docs/validation/data/neighbor_prediction_gaussian.csv"
-output_prefix <- sub("\\.csv$", "", input_paths[[1L]])
+prefix_arg <- grep("^--output-prefix=", args, value = TRUE)
+output_prefix <- if (length(prefix_arg)) {
+  sub("^--output-prefix=", "", prefix_arg[[1L]])
+} else NULL
+input_paths <- args[!startsWith(args, "--output-prefix=")]
+if (!length(input_paths)) {
+  input_paths <- "docs/validation/data/neighbor_prediction_gaussian.csv"
+}
+if (is.null(output_prefix)) {
+  output_prefix <- sub("\\.csv$", "", input_paths[[1L]])
+}
 target_output <- paste0(output_prefix, "_target_summary.csv")
 recommendation_output <- paste0(output_prefix, "_recommendations.csv")
 order_output <- paste0(output_prefix, "_order_sensitivity.csv")

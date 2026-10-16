@@ -828,19 +828,31 @@ recorded as a pass. The external pinned environment remains to be frozen.
   `docs/validation/05_MCML_PROPOSAL_RESULTS.md` and adjacent files.
   Synthetic and Loa runs took 4:50.59 and 27:34.37, peaking at 150,964 and
   249,808 KiB RSS, respectively.
-- Final verification for this development block uses all 24 source test files
-  and the rebuilt source archive under R 4.6.1 on Ubuntu 24.04.4. The ordinary
-  clean check is `Status: OK`, including installed-package tests, examples,
-  namespace/Rd consistency and loading checks. The refreshed implemented guide,
-  technical derivations and derivation standard contain 30, 86 and 3 pages;
-  the new MCML, nearest-predecessor prediction and nearest-predecessor
-  likelihood equation pages were visually inspected at full resolution.
-- After the TSC/MCP reports and roadmap updates, rebuilt the current source
-  source archive. `R CMD check --no-manual --no-build-vignettes` completed
-  with `Status: OK` under R 4.6.1 on Ubuntu 24.04.4, including all 24 test
-  files. The exact archive installed and loaded successfully from an isolated
-  library. The 30-page implemented guide PDF was refreshed after the roadmap
-  change and visually checked at A4 size.
+- Executed the registered NNP study using source archive SHA-256
+  `4bd9544a4ab011b08f5d7786c1d0db526f903ecc8cc93f08b23844f71247a7e7`.
+  Five model cases, three grid sizes, two orders, four neighbor budgets and
+  five seeds produced 3,000 target rows with no fit/prediction errors or
+  warnings. All input-order exact-boundary draws matched their ordinary route;
+  the maximum exact covariance discrepancy across both orders was below
+  `1.55e-15`. For Gaussian, binomial, Poisson and fixed grouped-slope cases,
+  candidate budgets 5/10/20 passed at 25/100/225 rows. The space-time case
+  required 10 and 40 at 25 and 100 rows, and no registered budget passed at
+  225 rows. Thus there is no universal budget recommendation. Raw per-case
+  results, combined summaries, resource observations and the validator are
+  linked from `docs/validation/06_NEIGHBOR_PREDICTION_RESULTS.md`.
+- Final verification for this development block used all 24 source test files
+  and a rebuilt source archive under R 4.6.1 on Ubuntu 24.04.4. `R CMD check
+  --no-manual --no-build-vignettes` completed with `Status: OK`, including
+  installed-package tests, examples, namespace/Rd consistency and loading
+  checks. The checked archive SHA-256 was
+  `8edff44855c7581a87b75edc86080f38ad4ed27d6bf4b74e3e1ac47cf2cc1cdc`.
+  The refreshed implemented guide, technical derivations and derivation
+  standard contain 30, 86 and 3 pages; the new MCML, nearest-predecessor
+  prediction and nearest-predecessor likelihood equation pages were visually
+  inspected at full resolution. This is a Linux development check, not evidence
+  of cross-platform support or numerical agreement with the separately managed
+  reference implementation. Per-configuration NNL external RSS and reference
+  comparisons remain open.
 
 ## Deliberately unresolved release metadata
 

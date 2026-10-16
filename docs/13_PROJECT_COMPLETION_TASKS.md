@@ -131,10 +131,11 @@ authority outside this package directory.
   the archived study.
 - [ ] Measure externally observed peak RSS by NNL configuration and on
   additional supported platforms before drawing comparative memory conclusions.
-- [ ] Execute and archive the preregistered NNP joint-prediction study across
+- [x] Execute and archive the preregistered NNP joint-prediction study across
   all five model cases, grid sizes, orderings, budgets and seeds; retain failed
   configurations and make no budget recommendation without the registered
-  grouped-target criteria passing.
+  grouped-target criteria passing. Results: `validation/06_NEIGHBOR_PREDICTION_RESULTS.md`;
+  no universal budget passed because the large space-time case was inconclusive.
 - [ ] Optimize the pure-R graph/local-factor route only after broader profiling
   on supported platforms identifies a defensible target.
 - [ ] Derive and validate separate scalable likelihoods for non-Gaussian,
