@@ -2,7 +2,7 @@
 
 ## Release objective
 
-The owner intends SPmodels for public use through CRAN and/or another route that makes installation straightforward. Plan for CRAN as the primary stable distribution route, with R-universe as a possible complementary or alternative repository and a versioned source repository for development. Publication, account configuration and repository creation are future work; nothing has been submitted or published.
+The owner intends SPmodels for public use through CRAN and/or another route that makes installation straightforward. Plan for CRAN as the primary stable distribution route, with R-universe as a possible complementary or alternative repository and a versioned source repository for development. A private versioned GitHub source repository was created on 16 October 2026; public publication, release-account configuration and external submissions remain future work.
 
 The release identity should communicate an independently implemented spatial modelling collection for research and teaching, with a consistent API and its own model documentation. Numerical reference comparisons provide evidence for particular statistical capabilities. The wider package must have a clearly documented, useful contribution.
 

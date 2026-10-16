@@ -194,8 +194,9 @@ Separable Matérn-exponential space-time models are available through
 estimated temporal scale are carried through Gaussian, binomial and Poisson
 fitting, prediction, simulation, variograms and validation; non-Gaussian MCML
 also re-estimates the declared scale.
-No numerical reference comparison, consumer migration, repository or
-publication has been completed. Future numerical claims require the evidence
-specified in the validation protocol. The implementation register records the
-latest package-check evidence. No release identity or numerical comparison
-result has been invented.
+No numerical reference comparison or consumer migration has been completed.
+A private, versioned GitHub source repository now holds the working master;
+there has been no public release or external submission. Future numerical
+claims require the evidence specified in the validation protocol. The
+implementation register records the latest package-check evidence. No release
+identity or numerical comparison result has been invented.

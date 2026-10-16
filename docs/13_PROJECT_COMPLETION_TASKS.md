@@ -190,7 +190,8 @@ authority outside this package directory.
   that HTML manual validation was skipped because `tidy` is unavailable.
 - [ ] Owner/external decision: authorize edits and migration tests in consumer
   projects.
-- [ ] Create and publish a versioned repository only when authorized.
+- [x] Create a private, versioned GitHub source repository after owner
+  authorization; public publication remains pending.
 - [ ] Prepare release metadata, citation, website and CRAN/R-universe route.
 - [ ] Optional release presentation: journal-specific typesetting and
   HTML/office-document exporters.
