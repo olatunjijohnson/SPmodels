@@ -39,6 +39,7 @@ These are functional requirements, not a promise to reproduce an external packag
 | F29 | Surface simulation | Spatial process, response generation and replicates |
 | F30 | Table output | Estimates, uncertainty, labels and generated table content |
 | F31 | Prediction update | New design, offsets, row alignment and preserved quantities |
+| F32 | Non-stationary covariance extension | Positive-definite construction, local-scale interpretation, fitting and prediction support |
 
 ## Result methods and reporting
 

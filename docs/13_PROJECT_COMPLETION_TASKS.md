@@ -46,6 +46,14 @@ authority outside this package directory.
 
 ## Remaining statistical and numerical development
 
+- [x] F32 foundation: implement and independently derive a positive-definite
+  non-stationary Matérn correlation primitive with local range/anisotropy
+  matrices and stationary-limit checks. The full estimation and fitted-model
+  workflow remains pending.
+- [ ] Specify local-matrix parameterization/regularization, identifiability,
+  and validation designs for non-stationary estimation before implementing
+  fitted-model support.
+
 - [x] F01/F04/F28: multiple-chain controls, between-chain diagnostics and
   autocorrelation-aware Monte Carlo standard errors.
 - [x] F03/M05/M08: repeated simulation/refit orchestration and parameter-

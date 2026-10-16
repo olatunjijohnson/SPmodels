@@ -6,8 +6,6 @@ Implementation began on 12 October 2026 after the owner's explicit instruction.
 This register distinguishes implemented evidence from planned scope. The full
 feature inventory in `02_FEATURE_INVENTORY.md` remains in scope.
 
-## First implementation slice
-
 | Field | F15 record |
 | --- | --- |
 | Capability | Matérn correlation |
@@ -24,6 +22,18 @@ feature inventory in `02_FEATURE_INVENTORY.md` remains in scope.
 | Reference comparison | Planned in a separate pinned environment; not yet run |
 | Consumers | Read-only call-site audit completed in `docs/12_CONSUMER_AUDIT.md`; authorized integration edits remain outstanding |
 | Status | Implemented locally; independent deterministic tests and package checks pass under R 4.6.1 on Linux |
+
+## Non-stationary covariance foundation
+
+| Field | F32 extension record |
+| --- | --- |
+| Capability | Valid non-stationary Matérn correlation from location-specific range/anisotropy matrices |
+| Public API | `sp_nonstationary_cor(coords, local_covariance, smoothness)` |
+| Construction | Pair-averaged local Mahalanobis distance with determinant adjustment; fixed common smoothness; local matrices must be symmetric positive definite |
+| Derivation | `docs/derivations/21_NONSTATIONARY_MATERN_COVARIANCE.md`, equations NS-01--NS-05 |
+| Synthetic checks | Stationary isotropic limit, varying-range/directional symmetry and PSD check, input failures |
+| Explicit boundary | Kernel only: local-matrix estimation, regression fitting, fitted prediction/simulation/diagnostics, and non-stationary space-time covariance are not implemented |
+| Status | Implemented and locally tested; no reference comparison or scientific recovery study yet |
 
 ## Gaussian geostatistical fitting slice
 
@@ -844,12 +854,10 @@ recorded as a pass. The external pinned environment remains to be frozen.
   and a rebuilt source archive under R 4.6.1 on Ubuntu 24.04.4. `R CMD check
   --no-manual --no-build-vignettes` completed with `Status: OK`, including
   installed-package tests, examples, namespace/Rd consistency and loading
-  checks. The checked archive SHA-256 was
-  `8edff44855c7581a87b75edc86080f38ad4ed27d6bf4b74e3e1ac47cf2cc1cdc`.
   The refreshed implemented guide, technical derivations and derivation
-  standard contain 30, 86 and 3 pages; the new MCML, nearest-predecessor
-  prediction and nearest-predecessor likelihood equation pages were visually
-  inspected at full resolution. This is a Linux development check, not evidence
+  standard contain 32, 93 and 3 pages. The newly added non-stationary
+  covariance derivation is included in the technical PDF. This is a Linux
+  development check, not evidence
   of cross-platform support or numerical agreement with the separately managed
   reference implementation. Per-configuration NNL external RSS and reference
   comparisons remain open.

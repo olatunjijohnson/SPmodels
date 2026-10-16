@@ -42,6 +42,11 @@ the completed modelling collection.
 You can currently:
 
 1. evaluate Matérn correlations with `matern_cor()`;
+1. construct a valid non-stationary Matérn correlation matrix from supplied
+   positive-definite local range/anisotropy matrices with
+   `sp_nonstationary_cor()`; see the dedicated derivation for the mathematical
+   contract. Estimation of those matrices and fitted-model workflows remain
+   unavailable;
 2. define covariance and optimiser settings with `sp_control()`;
 3. fit a Gaussian spatial regression with `sp_fit()`;
 4. inspect mean coefficients, their conditional covariance and the fitted
@@ -1197,7 +1202,9 @@ The following are not available and must not be implied by the presence of the
   constrained-estimated slope and intercept-slope matrices are implemented);
 - estimation of Matérn smoothness;
 - automatic CRS projection or transformation;
-- anisotropic or non-stationary covariance;
+- estimation of non-stationary local covariance structure or a fitted
+  non-stationary regression workflow (the `sp_nonstationary_cor()` covariance
+  primitive is available with a full derivation and local-matrix checks);
 - non-separable, anisotropic or non-stationary space-time dependence;
 - boundary-corrected inference for weakly identified temporal scales;
 - exact scalable joint prediction or an exact scalable replacement for dense
