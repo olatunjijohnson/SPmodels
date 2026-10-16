@@ -1,0 +1,5 @@
+"scenario","responses","all_repeats_passed","fraction_all_repeats_passed","median_ess_fraction","median_maximum_relative_mcse","median_log_temporal_movement"
+"TSC-01",25,4,0.16,0.289065877509879,0.801996639200949,-9.16452872454013e-07
+"TSC-02",25,6,0.24,0.313308654775216,0.670107617603123,-9.77495788298604e-07
+"TSC-03",25,1,0.04,0.0705525545777557,0.78121077661749,0
+"TSC-04",25,2,0.08,0.263515978867051,0.88076057337402,0

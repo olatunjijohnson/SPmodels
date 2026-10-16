@@ -1,0 +1,13 @@
+# Local package-build and check products
+*.tar.gz
+*.Rcheck/
+Rcheck/
+
+# Local R session and IDE state
+.Rhistory
+.RData
+.Rproj.user/
+
+# Editor/OS noise
+.DS_Store
+*~

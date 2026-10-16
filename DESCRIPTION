@@ -1,0 +1,17 @@
+Package: SPmodels
+Type: Package
+Title: Spatial Models for Research and Teaching
+Version: 0.0.0.9000
+Authors@R: person(given = "Olatunji", family = "Johnson",
+    email = "olatunjijohnson21111@gmail.com", role = c("aut", "cre"))
+Description: Independently implemented spatial modelling methods with a
+    formula-oriented interface, transparent uncertainty, and mathematical
+    derivations for research and teaching. This development snapshot contains
+    the explicitly documented and tested implementation subset described in
+    the project guide; external validation and release gates remain open.
+License: file LICENSE
+Encoding: UTF-8
+Depends: R (>= 4.2.0)
+Imports: graphics, parallel, stats
+Suggests: sf
+Config/roxygen2/version: 8.1.1

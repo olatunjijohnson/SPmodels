@@ -1,0 +1,9 @@
+"case","policy","attempts","gate_passes","required_passes","operational"
+"MCP-01","mixture_adaptive",5,1,4,FALSE
+"MCP-02","mixture_adaptive",5,0,4,FALSE
+"MCP-01","mixture_fixed",5,2,4,FALSE
+"MCP-02","mixture_fixed",5,0,4,FALSE
+"MCP-01","single_adaptive",5,1,4,FALSE
+"MCP-02","single_adaptive",5,0,4,FALSE
+"MCP-01","single_fixed",5,2,4,FALSE
+"MCP-02","single_fixed",5,2,4,FALSE
