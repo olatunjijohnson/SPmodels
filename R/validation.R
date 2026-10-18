@@ -1,3 +1,9 @@
+.sp_has_fork_workers <- function() {
+  platform <- paste(R.version$platform, Sys.info()[["sysname"]])
+  .Platform$OS.type != "windows" &&
+    !grepl("emscripten|wasm", platform, ignore.case = TRUE)
+}
+
 .sp_resolve_folds <- function(folds, n, seed) {
   if (is.numeric(folds) && length(folds) == 1L && !is.na(folds) &&
       is.finite(folds) && folds == as.integer(folds)) {
@@ -826,8 +832,9 @@ sp_simulation_recovery <- function(object, nsim = 100L, seed = NULL,
     stop("`workers` must be one positive integer.", call. = FALSE)
   }
   workers <- as.integer(workers)
-  if (workers > 1L && .Platform$OS.type == "windows") {
-    stop("Parallel recovery replicates currently require a non-Windows platform.",
+  if (workers > 1L && !.sp_has_fork_workers()) {
+    stop(paste0("Fork-based parallel recovery replicates are unavailable ",
+                "on Windows and WebAssembly; use `workers = 1`."),
          call. = FALSE)
   }
   if (workers > 1L && identical(object$likelihood_method, "Monte Carlo ML") &&
@@ -1213,8 +1220,9 @@ sp_simulation_scenarios <- function(objects, nsim = 100L, seed = NULL,
     stop("`workers` must be one positive integer.", call. = FALSE)
   }
   workers <- as.integer(workers)
-  if (workers > 1L && .Platform$OS.type == "windows") {
-    stop("Parallel scenarios currently require a non-Windows platform.",
+  if (workers > 1L && !.sp_has_fork_workers()) {
+    stop(paste0("Fork-based parallel scenarios are unavailable on Windows ",
+                "and WebAssembly; use `workers = 1`."),
          call. = FALSE)
   }
   seed_scope <- .sp_seed_scope(seed)
@@ -1317,8 +1325,9 @@ sp_simulation_precision <- function(
   seed_scope <- .sp_seed_scope(seed)
   on_error <- match.arg(on_error)
   workers <- positive_integer(workers, "workers")
-  if (workers > 1L && .Platform$OS.type == "windows") {
-    stop("Parallel recovery replicates currently require a non-Windows platform.",
+  if (workers > 1L && !.sp_has_fork_workers()) {
+    stop(paste0("Fork-based parallel recovery replicates are unavailable ",
+                "on Windows and WebAssembly; use `workers = 1`."),
          call. = FALSE)
   }
   if (workers > 1L && identical(object$likelihood_method, "Monte Carlo ML") &&

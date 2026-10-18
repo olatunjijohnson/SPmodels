@@ -42,7 +42,13 @@ The ordinary development check remains independently preserved with
 | CRAN | Stable public releases, subject to acceptance | A standard install.packages call using the final accepted package name |
 | R-universe | Optional pre-release, complementary or alternative distribution | A documented repository-based install with platform builds checked before recommending it to students |
 | Versioned source repository | Development history, issues, release tags and reproducibility | Maintainer and contributor workflow; source installation when appropriate |
+| WebR binary repository | Browser-based course use through WebAssembly package binaries | Build SPmodels and required dependencies, host the binary repository with browser-accessible CORS, then install from WebR; see [WebR setup](WEBR.md) |
 | Documentation and course sites | Model tutorials, full course materials and support | One clear getting-started page linking to the appropriate installation route |
+
+The WebR build workflow currently saves binaries as a private workflow
+artifact. It does not publish a student-accessible repository. Hosting those
+artifacts is a separate distribution decision and must preserve the private
+source repository unless the owner explicitly changes that decision.
 
 R-universe provides infrastructure for a personal package repository. Account ownership and repository configuration should be verified when publication begins. [R-universe setup documentation](https://docs.r-universe.dev/publish/set-up.html)
 

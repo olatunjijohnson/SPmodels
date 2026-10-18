@@ -73,6 +73,8 @@ it. This function does not fit the local matrices or a regression model.
   validation, and release work.
 - [All validation reports](docs/validation/README.md) — retained study designs
   and outcomes.
+- [WebR / WebAssembly setup](docs/WEBR.md) — build workflow, hosting boundary,
+  installation instructions, and current browser limitations.
 - [Derivations](docs/derivations/) — equation-level chapters, including the
   new [non-stationary Matérn derivation](docs/derivations/21_NONSTATIONARY_MATERN_COVARIANCE.md).
 - [Technical derivations (PDF)](docs/SPmodels_Technical_Derivations.pdf) and
@@ -81,11 +83,3 @@ it. This function does not fit the local matrices or a regression model.
 The project does not currently have a separate hosted package website. The
 source repository and these documentation files are the available project
 pages; a searchable teaching website remains future work.
-
-## Project conventions
-
-Use this `Research/SPmodels` directory as the working master. Synced Linux and
-macOS copies may have different absolute paths; the Codex outputs copy is only
-a delivery snapshot. SPmodels is developed independently from mathematical
-specifications and cited research. Numerical agreement with the required
-reference implementation has not yet been established.

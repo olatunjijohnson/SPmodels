@@ -1,0 +1,46 @@
+name: Build SPmodels for WebR
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'DESCRIPTION'
+      - 'NAMESPACE'
+      - 'R/**'
+      - '.github/workflows/build-webr.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-webr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out SPmodels
+        uses: actions/checkout@v4
+
+      - name: Build WebAssembly package repository
+        uses: r-wasm/actions/build-rwasm@v3
+        with:
+          packages: .
+          repo-path: _site
+
+      - name: Set up Node.js for the WebR runtime smoke check
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install WebR JavaScript runtime
+        run: npm install --no-save --no-package-lock webr@0.6.0
+
+      - name: Install SPmodels in WebR and run core workflow
+        run: node tools/webr-smoke.mjs
+
+      - name: Save WebR package repository as a private workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SPmodels-webr-${{ github.sha }}
+          path: _site/
+          if-no-files-found: error
+          retention-days: 30

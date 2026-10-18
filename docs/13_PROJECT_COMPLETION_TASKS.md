@@ -206,6 +206,9 @@ authority outside this package directory.
 - [x] Create a private, versioned GitHub source repository after owner
   authorization; public publication remains pending.
 - [ ] Prepare release metadata, citation, website and CRAN/R-universe route.
+- [ ] Build SPmodels and required dependencies for WebR, resolve any build
+  incompatibilities, host the binary repository with suitable browser access,
+  and verify the course workflow before claiming WebR support.
 - [ ] Optional release presentation: journal-specific typesetting and
   HTML/office-document exporters.
 - [ ] Submit to external services only when explicitly authorized.
