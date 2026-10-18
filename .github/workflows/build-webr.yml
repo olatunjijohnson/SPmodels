@@ -25,7 +25,7 @@ jobs:
         with:
           packages: .
           repo-path: _site
-          webr-image: ghcr.io/r-wasm/webr:v0.6.0
+          webr-image: ghcr.io/r-wasm/webr@sha256:445832203d9ee8377f35e364706ec550d00842437ffb4fbdea65613c4696f9b2
 
       - name: Set up Node.js for the WebR runtime smoke check
         uses: actions/setup-node@v4
