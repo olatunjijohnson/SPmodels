@@ -71,13 +71,19 @@ guide](https://docs.r-wasm.org/webr/latest/building.html).
 
 ## Status and next release gates
 
-The first CI build and WebR runtime smoke check passed on 18 October 2026 at
-SPmodels commit `939f03a`. The build compiled SPmodels and its required
-dependencies; the WebR session installed the binary package, loaded it,
+The reproducible CI build and WebR runtime smoke check passed on 18 October
+2026 at SPmodels commit `180a190`. The build compiled SPmodels and its required
+dependencies; the WebR 0.6.0 session installed the binary package, loaded it,
 constructed a non-stationary Matérn correlation matrix, fit a small fixed-
 covariance Gaussian model, predicted at a new point, and confirmed the
-WebAssembly sequential-only parallel guard. See the [recorded GitHub Actions
-run](https://github.com/olatunjijohnson/SPmodels/actions/runs/39161391488).
+WebAssembly sequential-only parallel guard. The builder uses the exact
+WebAssembly image digest recorded in the workflow. See the [recorded GitHub
+Actions run](https://github.com/olatunjijohnson/SPmodels/actions/runs/39161861749).
+
+An earlier attempt with the `v0.6.0` builder image failed during dependency
+metadata resolution before compilation. The passing workflow pins the exact
+builder image digest that succeeded; retain this evidence when updating the
+build toolchain.
 
 This is evidence for package installation and those core workflows in the
 WebR runtime, not a test of every SPmodels feature or the complete browser
