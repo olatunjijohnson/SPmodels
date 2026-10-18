@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   build-webr:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Check out SPmodels
         uses: actions/checkout@v4
@@ -25,6 +25,7 @@ jobs:
         with:
           packages: .
           repo-path: _site
+          webr-image: ghcr.io/r-wasm/webr:0.6.0
 
       - name: Set up Node.js for the WebR runtime smoke check
         uses: actions/setup-node@v4

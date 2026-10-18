@@ -73,8 +73,8 @@ it. This function does not fit the local matrices or a regression model.
   validation, and release work.
 - [All validation reports](docs/validation/README.md) — retained study designs
   and outcomes.
-- [WebR / WebAssembly setup](docs/WEBR.md) — build workflow, hosting boundary,
-  installation instructions, and current browser limitations.
+- [WebR / WebAssembly setup](docs/WEBR.md) — build and smoke-check status,
+  hosting boundary, installation instructions, and browser limitations.
 - [Derivations](docs/derivations/) — equation-level chapters, including the
   new [non-stationary Matérn derivation](docs/derivations/21_NONSTATIONARY_MATERN_COVARIANCE.md).
 - [Technical derivations (PDF)](docs/SPmodels_Technical_Derivations.pdf) and

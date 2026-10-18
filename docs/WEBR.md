@@ -71,10 +71,18 @@ guide](https://docs.r-wasm.org/webr/latest/building.html).
 
 ## Status and next release gates
 
-The workflow and instructions define the build and distribution route. The
-package has not yet been built or exercised in WebR, and no WebR binary
-repository is currently hosted. Before using it in a course, an authorized
-maintainer must run the build, resolve any WebAssembly dependency/build errors,
-host the output with suitable CORS access, and separately exercise the exact
-student tutorial and browser workflow. Keep the WebR version/build image and
-SPmodels commit with each course offering so results can be reproduced.
+The first CI build and WebR runtime smoke check passed on 18 October 2026 at
+SPmodels commit `939f03a`. The build compiled SPmodels and its required
+dependencies; the WebR session installed the binary package, loaded it,
+constructed a non-stationary Matérn correlation matrix, fit a small fixed-
+covariance Gaussian model, predicted at a new point, and confirmed the
+WebAssembly sequential-only parallel guard. See the [recorded GitHub Actions
+run](https://github.com/olatunjijohnson/SPmodels/actions/runs/39161391488).
+
+This is evidence for package installation and those core workflows in the
+WebR runtime, not a test of every SPmodels feature or the complete browser
+course page. The optional `sf` dependency is not part of this build. No WebR
+binary repository is currently hosted for students. Before course use, host
+the built repository with suitable CORS access and exercise the exact tutorial
+in the target browser. Keep the WebR version/build image and SPmodels commit
+with each course offering so results can be reproduced.
