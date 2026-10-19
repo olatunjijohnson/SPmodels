@@ -865,7 +865,7 @@ recorded as a pass. The external pinned environment remains to be frozen.
 ## Deliberately unresolved release metadata
 
 The package name remains provisional. The owner supplied the maintainer email
-on 12 October 2026. A distribution licence has not yet been selected;
-`DESCRIPTION` and `LICENSE` state this honestly, so the development snapshot is
-not release-ready.
+on 12 October 2026. The owner selected the MIT License on 19 October 2026;
+`DESCRIPTION`, `LICENSE` and `LICENSE-MIT` record the selection. Remaining
+release metadata and checks are still required before submission.
 

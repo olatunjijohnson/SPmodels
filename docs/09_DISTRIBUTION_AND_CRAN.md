@@ -2,7 +2,7 @@
 
 ## Release objective
 
-The owner intends SPmodels for public use through CRAN and/or another route that makes installation straightforward. Plan for CRAN as the primary stable distribution route, with R-universe as a possible complementary or alternative repository and a versioned source repository for development. A private versioned GitHub source repository was created on 16 October 2026; public publication, release-account configuration and external submissions remain future work.
+The owner intends SPmodels for public use through CRAN and/or another route that makes installation straightforward. Plan for CRAN as the primary stable distribution route, with R-universe as a possible complementary or alternative repository and a versioned source repository for development. A versioned GitHub source repository was created on 16 October 2026. The owner selected the MIT License on 19 October 2026; public repository visibility and the first WebR Pages deployment are being completed. External submissions remain future work.
 
 The release identity should communicate an independently implemented spatial modelling collection for research and teaching, with a consistent API and its own model documentation. Numerical reference comparisons provide evidence for particular statistical capabilities. The wider package must have a clearly documented, useful contribution.
 
@@ -45,10 +45,10 @@ The ordinary development check remains independently preserved with
 | WebR binary repository | Browser-based course use through WebAssembly package binaries | Build SPmodels and required dependencies, host the binary repository with browser-accessible CORS, then install from WebR; see [WebR setup](WEBR.md) |
 | Documentation and course sites | Model tutorials, full course materials and support | One clear getting-started page linking to the appropriate installation route |
 
-The WebR build workflow currently saves binaries as a private workflow
-artifact. It does not publish a student-accessible repository. Hosting those
-artifacts is a separate distribution decision and must preserve the private
-source repository unless the owner explicitly changes that decision.
+The WebR build workflow builds and smoke-tests the WebAssembly packages, then
+publishes the resulting static repository through GitHub Pages. The owner has
+authorized making the GitHub source repository public for this distribution.
+Confirm the Pages URL and browser CORS access after the first deployment.
 
 R-universe provides infrastructure for a personal package repository. Account ownership and repository configuration should be verified when publication begins. [R-universe setup documentation](https://docs.r-universe.dev/publish/set-up.html)
 

@@ -40,7 +40,7 @@ Phase order may change after the consumer audit. A partial release must state it
 | D09 | Data | Owner authorised suitable lsda datasets for examples; retain synthetic fixtures for known-truth checks and record dataset versions, support and provenance |
 | D10 | Discrepancies | Resolve through mathematical checks; never hide failures by changing tolerances or scope |
 | D11 | Implementation | Independent runtime; choose compilation and parallelism after correctness and profiling |
-| D12 | Authorship and licence | Owner decision at kickoff; accurate method citations remain required |
+| D12 | Authorship and licence | MIT License selected by owner on 19 October 2026; accurate method citations remain required |
 | D13 | Expansion | Prioritise future models using the syllabus and research needs |
 | D14 | Teaching | Clear assumptions, consistent methods, practical examples and model progression |
 | D15 | Distribution | Plan CRAN and easy installation, with optional R-universe and a versioned source repository |

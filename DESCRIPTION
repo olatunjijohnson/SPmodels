@@ -9,7 +9,7 @@ Description: Independently implemented spatial modelling methods with a
     derivations for research and teaching. This development snapshot contains
     the explicitly documented and tested implementation subset described in
     the project guide; external validation and release gates remain open.
-License: file LICENSE
+License: MIT + file LICENSE
 Encoding: UTF-8
 Depends: R (>= 4.2.0)
 Imports: graphics, parallel, stats

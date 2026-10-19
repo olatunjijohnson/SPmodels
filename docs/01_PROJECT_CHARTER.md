@@ -51,4 +51,4 @@ An earlier release may implement an explicitly stated subset. It must not claim 
 
 Maintain a derivation and provenance record for each mathematical component, including published methods, independently written equations, implementation revision and validation cases. Use synthetic fixtures by default and verify the provenance and permitted use of any external data. Do not imply ownership of another author's work.
 
-Package licensing, authorship and citation policy remain decisions for kickoff. No licence has been assigned by this planning pack.
+The owner selected the MIT License on 19 October 2026. Continue to maintain accurate authorship, copyright and method citations.

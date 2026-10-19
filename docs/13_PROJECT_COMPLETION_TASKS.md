@@ -196,7 +196,7 @@ authority outside this package directory.
 ## Release gates requiring owner or external decisions
 
 - [ ] Owner/external decision: final public package name.
-- [ ] Owner/external decision: distribution licence.
+- [x] Owner decision: MIT distribution licence selected on 19 October 2026.
 - [ ] After identity/licence decisions, resolve CRAN release notes by setting
   a release version and separating package-shipped user documentation from
   top-level project-management records. The current `--as-cran` run also noted
@@ -204,13 +204,15 @@ authority outside this package directory.
 - [ ] Owner/external decision: authorize edits and migration tests in consumer
   projects.
 - [x] Create a private, versioned GitHub source repository after owner
-  authorization; public publication remains pending.
+  authorization.
+- [ ] Make the source repository public, as authorized by the owner, and
+  confirm anonymous source and Pages access.
 - [ ] Prepare release metadata, citation, website and CRAN/R-universe route.
 - [x] Build SPmodels and required dependencies for WebR; install the binary
   and smoke-check core fitting and prediction in WebR. Evidence is in
   `docs/WEBR.md`.
-- [ ] Host the binary repository with suitable browser access and verify the
-  complete course workflow before claiming course-ready WebR support.
+- [ ] Deploy the binary repository and verify anonymous browser access, CORS,
+  and the complete course workflow before claiming course-ready WebR support.
 - [ ] Optional release presentation: journal-specific typesetting and
   HTML/office-document exporters.
 - [ ] Submit to external services only when explicitly authorized.

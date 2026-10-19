@@ -13,9 +13,17 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
 jobs:
   build-webr:
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     steps:
       - name: Check out SPmodels
         uses: actions/checkout@v4
@@ -38,10 +46,24 @@ jobs:
       - name: Install SPmodels in WebR and run core workflow
         run: node tools/webr-smoke.mjs
 
-      - name: Save WebR package repository as a private workflow artifact
-        uses: actions/upload-artifact@v4
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload WebR package repository for Pages
+        uses: actions/upload-pages-artifact@v3
         with:
-          name: SPmodels-webr-${{ github.sha }}
           path: _site/
-          if-no-files-found: error
-          retention-days: 30
+
+  deploy-webr:
+    needs: build-webr
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publish WebR package repository
+        id: deployment
+        uses: actions/deploy-pages@v4

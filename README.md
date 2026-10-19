@@ -5,10 +5,12 @@ teaching. It is designed around a familiar formula interface, explicit model
 assumptions, reproducible examples, and full mathematical derivations for
 implemented methods.
 
-> **Development status:** active, private development. The package has passed
-> its current Linux `R CMD check`, but it is not yet a public release. Some
+> **Development status:** active development. The package has passed
+> its current Linux `R CMD check`, but it is not yet a CRAN release. Some
 > capabilities are implemented while reference comparisons, cross-platform
-> checks, consumer migrations, and release decisions remain open.
+> checks, consumer migrations, and release work remain open.
+
+SPmodels is released under the [MIT License](LICENSE-MIT).
 
 ## What it can do
 
@@ -52,6 +54,10 @@ From a shell in a local source checkout, install the package with:
 R CMD INSTALL .
 ```
 
+For browser-based use, SPmodels is built as a WebAssembly package repository.
+Once the first deployment is complete, the WebR install URL and JavaScript
+example are documented in [WebR setup](docs/WEBR.md).
+
 ## Non-stationary covariance
 
 The first non-stationary capability is `sp_nonstationary_cor()`. It accepts
@@ -80,6 +86,6 @@ it. This function does not fit the local matrices or a regression model.
 - [Technical derivations (PDF)](docs/SPmodels_Technical_Derivations.pdf) and
   [derivation collection (PDF)](docs/SPmodels_Derivations.pdf).
 
-The project does not currently have a separate hosted package website. The
-source repository and these documentation files are the available project
-pages; a searchable teaching website remains future work.
+GitHub Pages will host the WebR package binaries after its first successful
+deployment. A separate searchable
+teaching and documentation website remains future work.
