@@ -69,3 +69,19 @@ jobs:
       - name: Publish WebR package repository
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Check out SPmodels smoke test
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js for published WebR smoke test
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install WebR JavaScript runtime
+        run: npm install --no-save --no-package-lock webr@0.6.0
+
+      - name: Install from the public Pages repository and run core workflow
+        run: node tools/webr-smoke.mjs
+        env:
+          WEBR_REPOSITORY: https://olatunjijohnson.github.io/SPmodels/

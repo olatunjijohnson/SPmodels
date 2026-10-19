@@ -12,12 +12,16 @@ smoke test, then publishes the repository through GitHub Pages.
 The workflow runs after relevant changes are pushed to `main`, or can be
 started manually from the repository's **Actions** tab using **Build SPmodels
 for WebR**. A successful run deploys the repository to
-`https://olatunjijohnson.github.io/SPmodels/`. This is a build and core runtime
-smoke test, not evidence that every optional workflow works in a browser.
+`https://olatunjijohnson.github.io/SPmodels/`, then installs the package from
+that public URL in WebR and reruns the core smoke workflow. This is not evidence
+that every optional workflow works in a browser.
 
 ## Make it available to a course
 
-The built repository is served from GitHub Pages. Install SPmodels from a WebR session:
+The built repository is served from GitHub Pages at
+`https://olatunjijohnson.github.io/SPmodels/`. The package index is anonymously
+accessible and the static host returns `Access-Control-Allow-Origin: *` for
+the repository files. Install SPmodels from a WebR session:
 
 ```r
 webr::install("SPmodels", repos = "https://olatunjijohnson.github.io/SPmodels/")
@@ -68,8 +72,9 @@ dependencies; the WebR 0.6.0 session installed the binary package, loaded it,
 constructed a non-stationary Matérn correlation matrix, fit a small fixed-
 covariance Gaussian model, predicted at a new point, and confirmed the
 WebAssembly sequential-only parallel guard. The builder uses the exact
-WebAssembly image digest recorded in the workflow. See the [recorded GitHub
-Actions run](https://github.com/olatunjijohnson/SPmodels/actions/runs/39161861749).
+WebAssembly image digest recorded in the workflow. The current workflow also
+checks installation from the deployed Pages URL after publishing. See the
+[recorded successful build run](https://github.com/olatunjijohnson/SPmodels/actions/runs/39239845877).
 
 An earlier attempt with the `v0.6.0` builder image failed during dependency
 metadata resolution before compilation. The passing workflow pins the exact
@@ -82,3 +87,5 @@ course page. The optional `sf` dependency is not part of this build. After
 deployment, verify anonymous access, cross-origin loading from the course site,
 and the exact tutorial in its target browser. Keep the WebR version/build image
 and SPmodels commit with each course offering so results can be reproduced.
+The live hosted install and core smoke check passed on 19 October 2026 at commit
+`eb8600f`; the current CI workflow repeats this check after each deployment.

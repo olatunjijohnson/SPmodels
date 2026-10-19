@@ -46,7 +46,7 @@ const webR = new WebR();
 try {
   await webR.init();
   await webR.installPackages("SPmodels", {
-    repos: `http://127.0.0.1:${address.port}/`,
+    repos: process.env.WEBR_REPOSITORY ?? `http://127.0.0.1:${address.port}/`,
     mount: false
   });
   await webR.evalRVoid(`

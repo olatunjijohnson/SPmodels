@@ -54,9 +54,9 @@ From a shell in a local source checkout, install the package with:
 R CMD INSTALL .
 ```
 
-For browser-based use, SPmodels is built as a WebAssembly package repository.
-Once the first deployment is complete, the WebR install URL and JavaScript
-example are documented in [WebR setup](docs/WEBR.md).
+For browser-based use, SPmodels is built as a WebAssembly package repository
+at [GitHub Pages](https://olatunjijohnson.github.io/SPmodels/). The WebR
+install URL and JavaScript example are documented in [WebR setup](docs/WEBR.md).
 
 ## Non-stationary covariance
 
@@ -86,6 +86,5 @@ it. This function does not fit the local matrices or a regression model.
 - [Technical derivations (PDF)](docs/SPmodels_Technical_Derivations.pdf) and
   [derivation collection (PDF)](docs/SPmodels_Derivations.pdf).
 
-GitHub Pages will host the WebR package binaries after its first successful
-deployment. A separate searchable
+GitHub Pages hosts the WebR package binaries. A separate searchable
 teaching and documentation website remains future work.

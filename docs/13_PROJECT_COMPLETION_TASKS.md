@@ -205,14 +205,16 @@ authority outside this package directory.
   projects.
 - [x] Create a private, versioned GitHub source repository after owner
   authorization.
-- [ ] Make the source repository public, as authorized by the owner, and
+- [x] Make the source repository public, as authorized by the owner, and
   confirm anonymous source and Pages access.
 - [ ] Prepare release metadata, citation, website and CRAN/R-universe route.
 - [x] Build SPmodels and required dependencies for WebR; install the binary
   and smoke-check core fitting and prediction in WebR. Evidence is in
   `docs/WEBR.md`.
-- [ ] Deploy the binary repository and verify anonymous browser access, CORS,
-  and the complete course workflow before claiming course-ready WebR support.
+- [x] Deploy the WebR binary repository and verify the public package index,
+  CORS response header, and a live WebR installation/smoke workflow.
+- [ ] Test the complete course workflow in its target browser before claiming
+  course-ready WebR support.
 - [ ] Optional release presentation: journal-specific typesetting and
   HTML/office-document exporters.
 - [ ] Submit to external services only when explicitly authorized.

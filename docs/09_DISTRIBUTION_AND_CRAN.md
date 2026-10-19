@@ -2,7 +2,7 @@
 
 ## Release objective
 
-The owner intends SPmodels for public use through CRAN and/or another route that makes installation straightforward. Plan for CRAN as the primary stable distribution route, with R-universe as a possible complementary or alternative repository and a versioned source repository for development. A versioned GitHub source repository was created on 16 October 2026. The owner selected the MIT License on 19 October 2026; public repository visibility and the first WebR Pages deployment are being completed. External submissions remain future work.
+The owner intends SPmodels for public use through CRAN and/or another route that makes installation straightforward. Plan for CRAN as the primary stable distribution route, with R-universe as a possible complementary or alternative repository and a versioned source repository for development. A versioned GitHub source repository was created on 16 October 2026 and made public on 19 October 2026 at the owner's request. The owner selected the MIT License on 19 October 2026. The WebR Pages repository is deployed; external submissions remain future work.
 
 The release identity should communicate an independently implemented spatial modelling collection for research and teaching, with a consistent API and its own model documentation. Numerical reference comparisons provide evidence for particular statistical capabilities. The wider package must have a clearly documented, useful contribution.
 
@@ -46,9 +46,10 @@ The ordinary development check remains independently preserved with
 | Documentation and course sites | Model tutorials, full course materials and support | One clear getting-started page linking to the appropriate installation route |
 
 The WebR build workflow builds and smoke-tests the WebAssembly packages, then
-publishes the resulting static repository through GitHub Pages. The owner has
-authorized making the GitHub source repository public for this distribution.
-Confirm the Pages URL and browser CORS access after the first deployment.
+publishes the resulting static repository through GitHub Pages. The public
+repository is confirmed at `https://olatunjijohnson.github.io/SPmodels/`; its
+package index responds to anonymous requests and serves an allow-all CORS
+header. Keep the deployed URL under automated installation tests.
 
 R-universe provides infrastructure for a personal package repository. Account ownership and repository configuration should be verified when publication begins. [R-universe setup documentation](https://docs.r-universe.dev/publish/set-up.html)
 
