@@ -83,9 +83,9 @@ build toolchain.
 
 This is evidence for package installation and those core workflows in the
 WebR runtime, not a test of every SPmodels feature or the complete browser
-course page. The optional `sf` dependency is not part of this build. After
-deployment, verify anonymous access, cross-origin loading from the course site,
-and the exact tutorial in its target browser. Keep the WebR version/build image
-and SPmodels commit with each course offering so results can be reproduced.
-The live hosted install and core smoke check passed on 19 October 2026 at commit
-`eb8600f`; the current CI workflow repeats this check after each deployment.
+course page. The optional `sf` dependency is not part of this build. The live
+hosted install and core smoke check passed on 19 October 2026 at commit
+`4b6422a`; the [successful GitHub Actions run](https://github.com/olatunjijohnson/SPmodels/actions/runs/39240436594)
+repeats this check after each deployment. Before course use, still exercise the
+exact tutorial in its target browser. Keep the WebR version/build image and
+SPmodels commit with each course offering so results can be reproduced.
