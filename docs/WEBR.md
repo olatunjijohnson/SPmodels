@@ -18,10 +18,11 @@ that every optional workflow works in a browser.
 
 ## Make it available to a course
 
-The built repository is served from GitHub Pages at
-`https://olatunjijohnson.github.io/SPmodels/`. The package index is anonymously
-accessible and the static host returns `Access-Control-Allow-Origin: *` for
-the repository files. Install SPmodels from a WebR session:
+The built repository and a small explanatory landing page are served from
+GitHub Pages at `https://olatunjijohnson.github.io/SPmodels/`. The package
+index is anonymously accessible and the static host returns
+`Access-Control-Allow-Origin: *` for the repository files. Install SPmodels
+from a WebR session:
 
 ```r
 webr::install("SPmodels", repos = "https://olatunjijohnson.github.io/SPmodels/")
@@ -41,9 +42,8 @@ await webR.installPackages("SPmodels", {
 await webR.evalR("library(SPmodels)");
 ```
 
-The URL becomes active after the first successful Pages deployment. WebR
-package installation downloads prebuilt WebAssembly package binaries from a
-repository; it does not compile SPmodels from its private source checkout in
+WebR package installation downloads prebuilt WebAssembly package binaries from
+a repository; it does not compile SPmodels from its GitHub source checkout in
 the student's browser. See the [WebR package installation
 guide](https://docs.r-wasm.org/webr/latest/packages.html) and [package build
 guide](https://docs.r-wasm.org/webr/latest/building.html).

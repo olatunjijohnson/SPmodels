@@ -31,6 +31,31 @@ limitations. In particular, no universal nearest-neighbour budget or MCML
 proposal setting is recommended. Study results and limitations are linked in
 the guide and validation reports below.
 
+## Installation
+
+SPmodels is not yet on CRAN. To install the development version in desktop R,
+run:
+
+```r
+install.packages("remotes")
+remotes::install_github("olatunjijohnson/SPmodels")
+library(SPmodels)
+```
+
+For browser-based R, install the prebuilt WebAssembly package after WebR has
+been initialized. If your tutorial has a WebR instance named `webR`, run:
+
+```js
+await webR.installPackages("SPmodels", {
+  repos: "https://olatunjijohnson.github.io/SPmodels/"
+});
+await webR.evalRVoid("library(SPmodels)");
+```
+
+See [WebR setup](docs/WEBR.md) for the complete example, package limitations,
+and the live package repository. The WebR repository URL is for package
+installation; the source code and user documentation are on GitHub.
+
 ## Quick start
 
 The following is the basic stationary Gaussian workflow. Coordinates must be
@@ -48,15 +73,11 @@ summary(fit)
 predict(fit, newdata = prediction_points, se.fit = TRUE)
 ```
 
-From a shell in a local source checkout, install the package with:
+From a shell in a local source checkout, you can also install the package with:
 
 ```sh
 R CMD INSTALL .
 ```
-
-For browser-based use, SPmodels is built as a WebAssembly package repository
-at [GitHub Pages](https://olatunjijohnson.github.io/SPmodels/). The WebR
-install URL and JavaScript example are documented in [WebR setup](docs/WEBR.md).
 
 ## Non-stationary covariance
 
