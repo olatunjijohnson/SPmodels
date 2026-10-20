@@ -31,6 +31,17 @@ stopifnot(fit_counts$family$family == "binomial",
           fit_counts$latent_mode$converged,
           all(fitted(fit_counts) > 0),
           all(fitted(fit_counts) < dat$trials))
+ordinary_binomial <- glm(
+  cbind(successes, trials - successes) ~ exposure, data = dat,
+  family = binomial()
+)
+ordinary_binomial_variogram <- sp_variogram(
+  ordinary_binomial, coords = ~ east + north, data = dat, bins = 3
+)
+stopifnot(identical(ordinary_binomial_variogram$stage, "pre_fit"),
+          identical(ordinary_binomial_variogram$family, "binomial"),
+          identical(ordinary_binomial_variogram$residual_type, "response"),
+          all(is.na(ordinary_binomial_variogram$values$fitted)))
 
 # Independently reconstruct the Laplace log likelihood at the fitted values.
 distance <- as.matrix(dist(as.matrix(dat[c("east", "north")])))
@@ -196,6 +207,7 @@ variogram_expected <- as.numeric(tapply(
 stopifnot(identical(.Random.seed, variogram_seed_before),
           close(binomial_variogram$values$semivariance,
                 variogram_expected),
+          identical(binomial_variogram$stage, "post_fit"),
           all(is.na(binomial_variogram$values$fitted)),
           identical(binomial_variogram$family, "binomial"))
 variogram_plot <- tempfile(fileext = ".pdf")

@@ -83,7 +83,10 @@ build toolchain.
 
 This is evidence for package installation and those core workflows in the
 WebR runtime, not a test of every SPmodels feature or the complete browser
-course page. The optional `sf` dependency is not part of this build. The live
+course page. The smoke test now includes the ordinary-model pre-fit variogram,
+the conditional post-fit variogram, chunked point predictions, joint draws on
+a deliberately tiny example, and target-to-data-frame conversion. The optional
+`sf` dependency is not part of this build. The live
 hosted install and core smoke check passed on 19 October 2026 at commit
 `4b6422a`; the [successful GitHub Actions run](https://github.com/olatunjijohnson/SPmodels/actions/runs/39240436594)
 repeats this check after each deployment. Before course use, still exercise the

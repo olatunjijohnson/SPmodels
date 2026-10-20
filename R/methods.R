@@ -53,7 +53,9 @@ logLik.spmodels_fit <- function(object, ...) {
     if (isTRUE(object$spatial)) {
       coordinate_info <- .sp_coordinates(object$coords, newdata,
                                          expected_crs = object$crs)
-      coordinates_new <- coordinate_info$values
+      coordinate_multiplier <- object$coordinate_multiplier
+      if (is.null(coordinate_multiplier)) coordinate_multiplier <- 1
+      coordinates_new <- coordinate_info$values * coordinate_multiplier
       if (nrow(coordinates_new) != nrow(x_new)) {
         stop("Coordinate and predictor rows in `newdata` do not align.", call. = FALSE)
       }
@@ -151,7 +153,9 @@ logLik.spmodels_fit <- function(object, ...) {
     }
     coordinate_info <- .sp_coordinates(object$coords, newdata,
                                         expected_crs = object$crs)
-    coordinates_new <- coordinate_info$values
+    coordinate_multiplier <- object$coordinate_multiplier
+    if (is.null(coordinate_multiplier)) coordinate_multiplier <- 1
+    coordinates_new <- coordinate_info$values * coordinate_multiplier
     if (nrow(coordinates_new) != nrow(x_new)) {
       stop("Coordinate and predictor rows in `newdata` do not align.",
            call. = FALSE)

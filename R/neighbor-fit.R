@@ -220,6 +220,10 @@ sp_fit_neighbor <- function(
     stop("Supply explicit coordinate units with `sp_control(distance_units = ...)`.",
          call. = FALSE)
   }
+  coordinate_multiplier <- .sp_distance_unit_multiplier(
+    coordinate_info$inferred_units, distance_units
+  )
+  coordinates <- coordinates * coordinate_multiplier
   distance_range <- .sp_coordinate_distance_range(coordinates)
   graph <- .sp_neighbor_graph(coordinates, neighbors, ordering,
                               observation_order)
@@ -302,7 +306,9 @@ sp_fit_neighbor <- function(
     xlevels = stats::.getXlevels(terms_object, mf), coords = coords,
     coordinate_names = colnames(coordinates),
     coordinate_source = coordinate_info$source, crs = coordinate_info$crs,
-    distance_units = distance_units, family = stats::gaussian(), model = mf,
+    distance_units = distance_units,
+    coordinate_multiplier = coordinate_multiplier,
+    family = stats::gaussian(), model = mf,
     x = x, y = y, offset = model_offset,
     data_used = data[row_index, , drop = FALSE], control = control,
     external_offset = "offset" %in% names(call), coordinates = coordinates,
@@ -431,7 +437,9 @@ predict.spmodels_neighbor_fit <- function(
                                contrasts.arg = object$contrasts)
   coordinate_info <- .sp_coordinates(object$coords, newdata,
                                       expected_crs = object$crs)
-  coordinates_new <- coordinate_info$values
+  coordinate_multiplier <- object$coordinate_multiplier
+  if (is.null(coordinate_multiplier)) coordinate_multiplier <- 1
+  coordinates_new <- coordinate_info$values * coordinate_multiplier
   if (nrow(coordinates_new) != nrow(x_new)) {
     stop("Coordinate and predictor rows in `newdata` do not align.", call. = FALSE)
   }

@@ -398,6 +398,22 @@ print.spmodels_prediction_target <- function(x, ...) {
   invisible(x)
 }
 
+#' Convert a prediction-target result to its summary table
+#'
+#' @param x An object returned by [sp_predict_target()].
+#' @param row.names Optional row names for the returned summary.
+#' @param optional Passed through for `as.data.frame()` compatibility.
+#' @param ... Reserved for method compatibility.
+#'
+#' @return The target summary data frame stored in `x$summary`.
+#' @export
+as.data.frame.spmodels_prediction_target <- function(x, row.names = NULL,
+                                                       optional = FALSE, ...) {
+  answer <- x$summary
+  if (!is.null(row.names)) row.names(answer) <- row.names
+  answer
+}
+
 #' Attach prediction-target summaries to spatial geometry
 #'
 #' Join the unrounded numerical summary from [sp_predict_target()] to point or

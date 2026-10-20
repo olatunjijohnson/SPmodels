@@ -504,7 +504,7 @@ Its arguments are:
 | `scale` | automatic | Starting value for \(\rho\), or fixed value |
 | `nugget_variance` | automatic | Starting value for \(\tau^2\), or fixed value |
 | `estimate` | `TRUE` | Estimate all three covariance parameters? |
-| `distance_units` | `NULL` | Required description such as `"m"` or `"km"` |
+| `distance_units` | `NULL` | Units used for model distances and reported covariance scales, such as `"m"` or `"km"` |
 | `maxit` | `500` | Maximum optimiser iterations |
 | `reltol` | `1e-8` | Optimisation tolerance |
 
@@ -527,6 +527,13 @@ fixed_control <- sp_control(
 
 Fixed values are useful for analytic checks and carefully specified teaching
 examples. They should not be chosen merely to force a desired conclusion.
+
+For ordinary numeric coordinate columns, values must already be expressed in
+`distance_units`. For projected `sf` input, SPmodels converts coordinates
+from a recognised CRS linear unit into the requested unit before computing
+distances. Thus a reported scale of `14.7` with `distance_units = "km"` means
+14.7 kilometres, not 14,700 metres carrying a kilometre label. Do not use
+longitude/latitude degrees as Euclidean distances.
 
 # How the model is fitted
 
@@ -754,12 +761,18 @@ conditioning calculation for every draw. This option fails when curvature is
 unusable. For Gaussian fits, regression and log-covariance blocks are treated
 as asymptotically independent because their cross-covariance is not available.
 
-For a large set of pointwise predictions, `sp_predict_chunked()` applies the
-same mean and marginal-variance equations to consecutive row chunks. It is
+For a large set of pointwise predictions, especially a grid with thousands of
+locations, use `sp_predict_chunked(..., se.fit = TRUE)`. It applies the same
+mean and marginal-variance equations to consecutive row chunks. It is
 exact for the returned pointwise quantities and reduces the largest
 training-by-grid matrix from (nm) to (nc) entries for chunk size (c).
 It does not calculate covariance across chunks and must not replace joint
-draws for regional or simultaneous targets.
+draws for regional or simultaneous targets. `sp_predict_draws()` constructs a
+dense prediction covariance and draws each requested simulation across all
+locations. Use it for modest point sets when spatial dependence among draws or
+draw-based target summaries matters; avoid it for a large teaching grid unless
+that joint distribution is itself the lesson. Large `nsim` further increases
+runtime and memory use.
 
 `sp_predict_draws_neighbor()` provides a different bounded-memory route for
 joint draws. It visits prediction rows in a declared order and conditions each
@@ -903,6 +916,28 @@ correlation_matrix <- matern_cor(
 responses at the fitted sites. Each column has the fitted regression mean and
 full fitted response covariance. It conditions on estimated parameters rather
 than propagating parameter uncertainty.
+
+There are two deliberately different variogram diagnostics. Before fitting a
+spatial process, calculate an empirical variogram of ordinary-model residuals
+to assess whether spatial structure is present and motivates a spatial model.
+For example:
+
+```r
+ordinary <- lm(outcome ~ rainfall + elevation, data = survey_points)
+sp_variogram(
+  ordinary, coords = ~ east + north, data = survey_points
+)
+```
+
+This pre-fit diagnostic also accepts a `glm`, an `sp_fit(..., spatial =
+FALSE)` fit with coordinates, or explicit `coords` and `values`. Coordinates
+must be projected Euclidean coordinates; for numeric columns, supply their
+units with `distance_units` if needed.
+
+After fitting a spatial model, use
+`sp_variogram(fit, residual_type = "conditional")` to ask whether spatial
+structure remains in residuals after conditioning on the fitted process. Do
+not interpret this as the same question as the pre-fit variogram.
 
 `sp_variogram(fit)` calculates
 

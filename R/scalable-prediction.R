@@ -5,6 +5,10 @@
 #' pointwise prediction, not a covariance approximation. It avoids holding the
 #' complete training-by-prediction cross-covariance matrix in memory, but does
 #' not return a joint covariance or joint draws across chunks.
+#' Use it for large grids that need pointwise means and/or marginal standard
+#' errors. Use [sp_predict_draws()] when the workflow requires cross-location
+#' dependence, joint uncertainty, or draw-based target summaries; its dense
+#' covariance can be much slower for large grids.
 #'
 #' @param object A fitted `spmodels_fit` object.
 #' @param newdata Non-empty prediction data containing every required

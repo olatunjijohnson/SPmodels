@@ -26,7 +26,10 @@ sp_control(
   \item{estimate}{Whether to estimate covariance and declared random-effect
   variance parameters by maximum likelihood.}
   \item{distance_units}{A non-empty description of the units shared by both
-  coordinate axes, such as \code{"km"}. Units are recorded, not converted.}
+  coordinate axes and used for model distances and covariance scales, such as
+  \code{"km"}. Numeric coordinates are assumed to use these units already.
+  Projected \code{sf} coordinates with a recognised linear CRS unit are
+  converted before fitting.}
   \item{maxit}{Positive maximum number of optimisation iterations.}
   \item{reltol}{Positive optimisation tolerance.}
 }

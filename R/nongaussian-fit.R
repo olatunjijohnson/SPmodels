@@ -171,6 +171,10 @@
     stop("Supply explicit coordinate units with `sp_control(distance_units = ...)`.",
          call. = FALSE)
   }
+  coordinate_multiplier <- .sp_distance_unit_multiplier(
+    coordinate_info$inferred_units, distance_units
+  )
+  coordinates <- coordinates * coordinate_multiplier
   distance <- .sp_dist(coordinates)
   positive_distances <- distance[upper.tri(distance) & distance > 0]
   if (!length(positive_distances)) {
@@ -470,7 +474,9 @@
     xlevels = stats::.getXlevels(terms_object, mf), coords = coords,
     coordinate_names = colnames(coordinates),
     coordinate_source = coordinate_info$source, crs = coordinate_info$crs,
-    distance_units = distance_units, family = family, model = mf, x = x,
+    distance_units = distance_units,
+    coordinate_multiplier = coordinate_multiplier,
+    family = family, model = mf, x = x,
     y = y, trials = trials, offset = model_offset, coordinates = coordinates,
     data_used = data[row_index, , drop = FALSE], control = control,
     response_encoding = response$encoding,

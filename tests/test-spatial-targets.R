@@ -28,7 +28,8 @@ point_target <- sp_predict_target(draw_object, threshold = 0.55,
 stopifnot(close(point_target$summary$mean, colMeans(draw_matrix)),
           close(point_target$summary$sd, apply(draw_matrix, 2, sd)),
           close(point_target$summary$exceedance_probability,
-                colMeans(draw_matrix > 0.55)))
+                colMeans(draw_matrix > 0.55)),
+          identical(as.data.frame(point_target), point_target$summary))
 
 weights <- c(1, 3, 2)
 groups <- c("west", "west", "east")

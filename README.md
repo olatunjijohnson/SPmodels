@@ -42,8 +42,21 @@ remotes::install_github("olatunjijohnson/SPmodels")
 library(SPmodels)
 ```
 
+For a reproducible course, pin the source installation to a reviewed commit
+instead of following the moving `main` branch. Replace `<commit-sha>` with the
+40-character commit selected for the course:
+
+```r
+remotes::install_github(
+  "olatunjijohnson/SPmodels",
+  ref = "<commit-sha>"
+)
+```
+
 For browser-based R, install the prebuilt WebAssembly package after WebR has
-been initialized. If your tutorial has a WebR instance named `webR`, run:
+been initialized. The published WebR repository currently tracks the latest
+successful build; record the SPmodels commit and WebR version alongside course
+materials. If your tutorial has a WebR instance named `webR`, run:
 
 ```js
 await webR.installPackages("SPmodels", {
@@ -55,6 +68,11 @@ await webR.evalRVoid("library(SPmodels)");
 See [WebR setup](docs/WEBR.md) for the complete example, package limitations,
 and the live package repository. The WebR repository URL is for package
 installation; the source code and user documentation are on GitHub.
+
+Use `sp_predict_chunked(..., se.fit = TRUE)` for pointwise means and standard
+errors over large grids. Reserve `sp_predict_draws()` for smaller sets where
+joint spatial draws or draw-based target summaries are needed; its cost and
+memory use rise quickly with grid size and number of draws.
 
 ## Quick start
 

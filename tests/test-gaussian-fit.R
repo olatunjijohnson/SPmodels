@@ -145,6 +145,34 @@ if (requireNamespace("sf", quietly = TRUE)) {
   stopifnot(identical(fit_sf$coordinate_source, "sf"))
   stopifnot(identical(fit_sf$distance_units, "metre"))
   stopifnot(length(predict(fit_sf, dat_sf[1:2, ])) == 2L)
+
+  # British National Grid coordinates are metres; requesting kilometres
+  # converts both training and prediction coordinates before covariance use.
+  projected <- sf::st_as_sf(
+    data.frame(response = dat$response, exposure = dat$exposure,
+      east = 371000 + dat$east * 1000,
+      north = 408000 + dat$north * 1000),
+    coords = c("east", "north"), crs = 27700
+  )
+  projected_km <- sp_fit(
+    response ~ exposure, projected,
+    control = sp_control(smoothness = 0.5, spatial_variance = 1.4,
+      scale = 1.7, nugget_variance = 0.3, estimate = FALSE,
+      distance_units = "km")
+  )
+  projected_m <- sp_fit(
+    response ~ exposure, projected,
+    control = sp_control(smoothness = 0.5, spatial_variance = 1.4,
+      scale = 1700, nugget_variance = 0.3, estimate = FALSE,
+      distance_units = "m")
+  )
+  stopifnot(identical(projected_km$distance_units, "km"),
+    isTRUE(all.equal(projected_km$coordinates,
+      sf::st_coordinates(projected) / 1000)),
+    all.equal(as.numeric(logLik(projected_km)),
+      as.numeric(logLik(projected_m)), tolerance = 1e-10),
+    all.equal(predict(projected_km, projected[1:2, ]),
+      predict(projected_m, projected[1:2, ]), tolerance = 1e-10))
   expect_error(sp_fit(response ~ exposure, dat_sf, coords = ~ exposure,
                       control = ctl), "Do not supply")
   longlat <- sf::st_transform(dat_sf, 4326)
@@ -163,10 +191,41 @@ independent_sigma2 <- sum(residuals(lm_fit)^2) / nrow(dat)
 stopifnot(all.equal(independent$covariance[["nugget_variance"]],
                     independent_sigma2, tolerance = 1e-12))
 stopifnot(identical(attr(logLik(independent), "df"), 3L))
+stopifnot(all.equal(as.numeric(logLik(independent)),
+                    as.numeric(stats::logLik(lm_fit)), tolerance = 1e-12))
+independent_with_coords <- sp_fit(
+  response ~ exposure, dat, spatial = FALSE, coords = ~ east + north,
+  control = sp_control(distance_units = "km")
+)
+prefit_variogram <- sp_variogram(
+  lm_fit, coords = ~ east + north, data = dat, bins = 3
+)
+nonspatial_variogram <- sp_variogram(independent_with_coords, bins = 3)
+direct_variogram <- sp_variogram(
+  coords = as.matrix(dat[c("east", "north")]),
+  values = residuals(lm_fit), bins = 3, distance_units = "km"
+)
+stopifnot(identical(prefit_variogram$stage, "pre_fit"),
+          identical(prefit_variogram$residual_type, "response"),
+          identical(prefit_variogram$values$semivariance,
+                    direct_variogram$values$semivariance),
+          isTRUE(all.equal(nonspatial_variogram$values$semivariance,
+                           prefit_variogram$values$semivariance,
+                           tolerance = 1e-12)),
+          all(is.na(prefit_variogram$values$fitted)))
+conditional_variogram <- sp_variogram(fit, residual_type = "conditional",
+                                      bins = 3)
+stopifnot(identical(conditional_variogram$stage, "post_fit"))
+
+beta_standard_error_expected <- sqrt(diag(
+  solve(crossprod(x, v_inverse %*% x))
+))
+stopifnot(all.equal(unname(sqrt(diag(vcov(fit)))),
+                    unname(beta_standard_error_expected), tolerance = 1e-12))
 independent_prediction <- predict(independent, newdata = new, se.fit = TRUE,
                                   target = "observation")
 stopifnot(all(is.finite(independent_prediction$fit)),
           all(independent_prediction$se.fit > 0))
-expect_error(sp_variogram(independent), "spatial = TRUE")
+expect_error(sp_variogram(independent), "Supply two coordinate columns")
 
 cat("Gaussian fitting and prediction tests passed.\n")

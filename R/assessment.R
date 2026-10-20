@@ -62,65 +62,160 @@ simulate.spmodels_fit <- function(object, nsim = 1L, seed = NULL, ...) {
   simulations
 }
 
-#' Empirical residual variogram from a fitted spatial model
+#' Empirical residual variogram for pre-fit and post-fit diagnostics
 #'
-#' Bin pairwise semivariances of either mean-model residuals or conditional
-#' residuals. The returned object also contains the fitted model variogram at
-#' each bin midpoint.
+#' Before adding a spatial process, inspect ordinary residuals from an `lm`,
+#' `glm`, or non-spatial `sp_fit()` model to assess whether residual variation
+#' is spatially structured. After fitting a spatial model, use
+#' `residual_type = "conditional"` to assess whether spatial structure remains.
 #'
-#' @param object A fitted `spmodels_fit` object.
+#' @param object A spatial or non-spatial `spmodels_fit`, an `lm`/`glm` model,
+#'   or `NULL` when supplying `coords` and `values` directly.
 #' @param bins Positive number of equal-width distance bins.
 #' @param max_distance Optional positive maximum pair distance. The default is
 #'   the largest observed pair distance.
-#' @param residual_type For Gaussian fits, residuals after the regression mean
-#'   (`"mean"`) or conditional spatial prediction (`"conditional"`). For
-#'   binomial/Poisson fits, `"pearson"`, `"deviance"`, or
-#'   `"randomized_quantile"`. The family-specific first choice is the default.
+#' @param residual_type For a spatial Gaussian fit, ordinary mean-model
+#'   residuals (`"mean"`) or conditional residuals (`"conditional"`). For a
+#'   spatial binomial/Poisson fit, `"randomized_quantile"`, `"pearson"`, or
+#'   `"deviance"`. For `lm`/`glm`, this is passed to `residuals()` and defaults
+#'   to ordinary response residuals. A non-spatial SPmodels fit uses `"mean"`.
 #' @param seed Optional local seed for randomized-quantile residuals.
+#' @param coords For an ordinary `lm`/`glm` or direct residual vector, either
+#'   a two-column numeric matrix/data frame or a one-sided coordinate formula.
+#'   A projected `sf` data frame can be supplied through `data` instead.
+#' @param values Numeric residual values when `object = NULL`.
+#' @param data Data used to evaluate a coordinate formula for an ordinary
+#'   model. Pass the complete source data when its coordinate columns were not
+#'   part of that model's formula.
+#' @param distance_units Optional label for supplied coordinates; when `data`
+#'   is projected `sf`, native CRS units are converted to these units.
 #'
 #' @return An object of class `spmodels_variogram` containing a `values` data
 #'   frame and metadata.
 #' @export
-sp_variogram <- function(object, bins = 10L, max_distance = NULL,
-                         residual_type = NULL, seed = NULL) {
-  if (!inherits(object, "spmodels_fit")) {
-    stop("`object` must be a fitted `spmodels_fit` model.", call. = FALSE)
-  }
-  if (!isTRUE(object$spatial)) {
-    stop("A spatial variogram requires a model fitted with `spatial = TRUE`.",
+sp_variogram <- function(object = NULL, bins = 10L, max_distance = NULL,
+                         residual_type = NULL, seed = NULL, coords = NULL,
+                         values = NULL, data = NULL, distance_units = NULL) {
+  fitted_spatial <- inherits(object, "spmodels_fit") &&
+    isTRUE(object$spatial)
+  fitted_model <- if (fitted_spatial) object else NULL
+  if (fitted_spatial) {
+    if (!is.null(coords) || !is.null(values) || !is.null(data)) {
+      stop("Do not supply `coords`, `values`, or `data` with a spatial fit.",
+           call. = FALSE)
+    }
+    coordinates <- object$coordinates
+    residual_value <- if (object$family$family == "gaussian") {
+      if (is.null(residual_type)) residual_type <- "mean"
+      if (!residual_type %in% c("mean", "conditional")) {
+        stop("For a spatial Gaussian fit, `residual_type` must be `mean` or `conditional`.",
+             call. = FALSE)
+      }
+      if (residual_type == "mean") object$residual_mean else
+        stats::residuals(object)
+    } else {
+      choices <- c("randomized_quantile", "pearson", "deviance")
+      if (is.null(residual_type)) residual_type <- choices[[1L]]
+      if (!residual_type %in% choices) {
+        stop(sprintf("For this spatial fit, `residual_type` must be one of: %s.",
+                     paste(choices, collapse = ", ")), call. = FALSE)
+      }
+      diagnostics <- sp_diagnostics(object, seed = seed)
+      diagnostics[[paste0(residual_type, "_residual")]]
+    }
+    family_name <- object$family$family
+    units <- object$distance_units
+  } else if (inherits(object, "spmodels_fit")) {
+    if (!is.null(values)) {
+      stop("Do not supply `values` with an `spmodels_fit` object.",
+           call. = FALSE)
+    }
+    if (is.null(residual_type)) residual_type <- "mean"
+    if (!identical(residual_type, "mean")) {
+      stop("A non-spatial SPmodels fit supports only `residual_type = \"mean\"`.",
+           call. = FALSE)
+    }
+    residual_value <- object$residual_mean
+    coordinates <- object$coordinates
+    if (is.null(coordinates)) {
+      source_data <- data
+      if (is.null(source_data)) source_data <- object$data_used
+      coordinate_info <- .sp_variogram_coordinates(
+        coords, source_data, length(residual_value), names(residual_value)
+      )
+      units <- distance_units
+      if (is.null(units)) units <- object$distance_units
+      if (is.null(units)) units <- coordinate_info$inferred_units
+      multiplier <- .sp_distance_unit_multiplier(
+        coordinate_info$inferred_units, units
+      )
+      coordinates <- coordinate_info$values * multiplier
+    } else if (!is.null(coords) || !is.null(data)) {
+      stop("Coordinates were retained by this non-spatial fit; do not also supply `coords` or `data`.",
+           call. = FALSE)
+    }
+    family_name <- object$family$family
+    units <- object$distance_units
+  } else if (inherits(object, c("lm", "glm"))) {
+    if (!is.null(values)) {
+      stop("Do not supply `values` with an `lm` or `glm` object.",
+           call. = FALSE)
+    }
+    if (is.null(residual_type)) residual_type <- "response"
+    residual_value <- stats::residuals(object, type = residual_type)
+    if (is.null(data)) data <- object$model
+    coordinate_info <- .sp_variogram_coordinates(
+      coords, data, length(residual_value), names(residual_value)
+    )
+    coordinates <- coordinate_info$values
+    units <- distance_units
+    if (is.null(units)) units <- coordinate_info$inferred_units
+    multiplier <- .sp_distance_unit_multiplier(
+      coordinate_info$inferred_units, units
+    )
+    coordinates <- coordinates * multiplier
+    family_name <- if (inherits(object, "glm")) object$family$family else
+      "gaussian"
+  } else if (is.null(object)) {
+    if (is.null(coords) || is.null(values)) {
+      stop("Supply an `lm`/`glm` or `spmodels_fit`, or provide both `coords` and `values`.",
+           call. = FALSE)
+    }
+    residual_value <- values
+    coordinate_info <- .sp_variogram_coordinates(
+      coords, data, length(residual_value), names(residual_value)
+    )
+    coordinates <- coordinate_info$values
+    units <- distance_units
+    if (is.null(units)) units <- coordinate_info$inferred_units
+    multiplier <- .sp_distance_unit_multiplier(
+      coordinate_info$inferred_units, units
+    )
+    coordinates <- coordinates * multiplier
+    residual_type <- "supplied"
+    family_name <- "supplied"
+  } else {
+    stop("`object` must be an `lm`, `glm`, `spmodels_fit`, or NULL.",
          call. = FALSE)
   }
-  gaussian <- object$family$family == "gaussian"
-  choices <- if (gaussian) c("mean", "conditional") else
-    c("randomized_quantile", "pearson", "deviance")
-  if (is.null(residual_type)) residual_type <- choices[[1L]]
-  if (!is.character(residual_type) || length(residual_type) != 1L ||
-      is.na(residual_type) || !residual_type %in% choices) {
-    stop(sprintf("`residual_type` must be one of: %s.",
-                 paste(choices, collapse = ", ")), call. = FALSE)
+  gaussian <- family_name == "gaussian"
+  if (length(residual_value) != nrow(coordinates) ||
+      ncol(coordinates) != 2L || any(!is.finite(coordinates)) ||
+      any(!is.finite(residual_value))) {
+    stop("Coordinates and residual values must be finite and have matching rows.",
+         call. = FALSE)
   }
   if (!is.numeric(bins) || length(bins) != 1L || is.na(bins) ||
       !is.finite(bins) || bins < 1 || bins != as.integer(bins)) {
     stop("`bins` must be one positive integer.", call. = FALSE)
   }
-  distance_matrix <- .sp_dist(object$coordinates)
+  distance_matrix <- .sp_dist(coordinates)
   keep_triangle <- lower.tri(distance_matrix)
   pair_distance <- distance_matrix[keep_triangle]
   if (is.null(max_distance)) max_distance <- max(pair_distance)
   if (!is.numeric(max_distance) || length(max_distance) != 1L ||
       is.na(max_distance) || !is.finite(max_distance) || max_distance <= 0) {
     stop("`max_distance` must be one finite positive number.", call. = FALSE)
-  }
-  residual_value <- if (gaussian && residual_type == "mean") {
-    object$residual_mean
-  } else if (gaussian) {
-    stats::residuals(object)
-  } else {
-    diagnostics <- sp_diagnostics(object, seed = seed)
-    switch(residual_type,
-      randomized_quantile = diagnostics$randomized_quantile_residual,
-      pearson = diagnostics$pearson_residual,
-      deviance = diagnostics$deviance_residual)
   }
   difference <- outer(residual_value, residual_value, "-")
   pair_semivariance <- 0.5 * difference[keep_triangle]^2
@@ -133,26 +228,28 @@ sp_variogram <- function(object, bins = 10L, max_distance = NULL,
   count <- as.integer(table(group))
   empirical <- as.numeric(tapply(pair_semivariance[retained], group, mean))
   midpoint <- (breaks[-1L] + breaks[-length(breaks)]) / 2
-  if (!gaussian) {
+  if (is.null(fitted_model) || !gaussian) {
     fitted <- rep(NA_real_, length(midpoint))
-  } else if (is.null(object$temporal)) {
-    fitted <- object$covariance[["nugget_variance"]] +
-      object$covariance[["spatial_variance"]] *
-      (1 - matern_cor(midpoint, object$covariance[["scale"]],
-                      object$smoothness))
   } else {
-    pair_time_lag <- .sp_temporal_lag(object$temporal_values)[keep_triangle]
-    fitted_pair <- object$covariance[["nugget_variance"]] +
-      object$covariance[["spatial_variance"]] *
-      (1 - spacetime_cor(pair_distance, pair_time_lag,
-        object$covariance[["scale"]], object$smoothness,
-        object$temporal_scale))
-    fitted <- as.numeric(tapply(fitted_pair[retained], group, mean))
+    if (is.null(fitted_model$temporal)) {
+      fitted <- fitted_model$covariance[["nugget_variance"]] +
+        fitted_model$covariance[["spatial_variance"]] *
+        (1 - matern_cor(midpoint, fitted_model$covariance[["scale"]],
+                        fitted_model$smoothness))
+    } else {
+      pair_time_lag <- .sp_temporal_lag(fitted_model$temporal_values)[keep_triangle]
+      fitted_pair <- fitted_model$covariance[["nugget_variance"]] +
+        fitted_model$covariance[["spatial_variance"]] *
+        (1 - spacetime_cor(pair_distance, pair_time_lag,
+          fitted_model$covariance[["scale"]], fitted_model$smoothness,
+          fitted_model$temporal_scale))
+      fitted <- as.numeric(tapply(fitted_pair[retained], group, mean))
+    }
   }
-  if (gaussian && !is.null(object$random_specification)) {
+  if (gaussian && !is.null(fitted_model$random_specification)) {
     random_covariance <- .sp_random_covariance(
-      object$random_specification$z, object$random_specification$z,
-      object$random_specification$column_group, object$random_variance
+      fitted_model$random_specification$z, fitted_model$random_specification$z,
+      fitted_model$random_specification$column_group, fitted_model$random_variance
     )
     random_semivariance <- 0.5 * outer(diag(random_covariance),
       diag(random_covariance), "+") - random_covariance
@@ -160,9 +257,9 @@ sp_variogram <- function(object, bins = 10L, max_distance = NULL,
                              group, mean)
     fitted <- fitted + as.numeric(grouped_random)
   }
-  if (gaussian && !is.null(object$random_slope_specification)) {
+  if (gaussian && !is.null(fitted_model$random_slope_specification)) {
     random_covariance <- .sp_random_slope_covariance(
-      object$random_slope_specification
+      fitted_model$random_slope_specification
     )
     random_semivariance <- 0.5 * outer(diag(random_covariance),
       diag(random_covariance), "+") - random_covariance
@@ -176,10 +273,58 @@ sp_variogram <- function(object, bins = 10L, max_distance = NULL,
     stringsAsFactors = FALSE
   )
   structure(list(values = values, residual_type = residual_type,
-                 family = object$family$family, seed = seed,
-                 distance_units = object$distance_units,
+                 family = family_name, seed = seed,
+                 stage = if (fitted_spatial &&
+                   (family_name != "gaussian" ||
+                    identical(residual_type, "conditional"))) "post_fit" else
+                      "pre_fit",
+                 distance_units = units,
                  max_distance = max_distance, call = match.call()),
             class = "spmodels_variogram")
+}
+
+.sp_variogram_coordinates <- function(coords, data, n, value_names = NULL) {
+  rows <- NULL
+  if (!is.null(data) && !is.null(value_names) &&
+      length(value_names) == n && !is.null(row.names(data))) {
+    candidate <- match(value_names, row.names(data))
+    if (!anyNA(candidate)) rows <- candidate
+  }
+  if (inherits(coords, "sf")) {
+    info <- .sp_coordinates(NULL, coords, rows = rows)
+  } else if (is.null(coords) && inherits(data, "sf")) {
+    info <- .sp_coordinates(NULL, data, rows = rows)
+  } else if (inherits(coords, "formula")) {
+    if (is.null(data)) {
+      stop("Supply `data` when `coords` is a formula.", call. = FALSE)
+    }
+    if (inherits(data, "sf")) {
+      stop("For `sf` data, use its geometry and omit the `coords` formula.",
+           call. = FALSE)
+    }
+    info <- .sp_coordinates(coords, data, rows = rows)
+  } else if (is.matrix(coords) || is.data.frame(coords)) {
+    coordinates <- as.matrix(coords)
+    if (!is.numeric(coordinates) || ncol(coordinates) != 2L) {
+      stop("`coords` must contain exactly two numeric columns.",
+           call. = FALSE)
+    }
+    if (nrow(coordinates) != n && !is.null(value_names) &&
+        !is.null(rownames(coordinates))) {
+      selected <- match(value_names, rownames(coordinates))
+      if (!anyNA(selected)) coordinates <- coordinates[selected, , drop = FALSE]
+    }
+    info <- list(values = coordinates, inferred_units = NULL)
+  } else {
+    stop("Supply two coordinate columns, a coordinate formula, or projected `sf` data.",
+         call. = FALSE)
+  }
+  if (nrow(info$values) != n || anyNA(info$values) ||
+      any(!is.finite(info$values))) {
+    stop("Coordinates must be finite and have one row per residual value.",
+         call. = FALSE)
+  }
+  info
 }
 
 #' @export

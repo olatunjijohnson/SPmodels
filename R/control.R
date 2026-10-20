@@ -13,9 +13,11 @@
 #'   random-intercept variances. Named values must match grouping variables.
 #' @param estimate Logical scalar. Estimate covariance parameters by maximum
 #'   likelihood?
-#' @param distance_units Non-empty character scalar describing the units of
-#'   both coordinate axes, for example `"km"`. Units are recorded, not
-#'   converted.
+#' @param distance_units Non-empty character scalar for model distances and
+#'   covariance scales, for example `"km"`. Numeric coordinate columns are
+#'   assumed to already use these units. For projected `sf` input with a
+#'   recognised linear CRS unit, coordinates are converted from the CRS unit
+#'   to this unit before fitting.
 #' @param maxit Positive integer maximum number of optimisation iterations.
 #' @param reltol Positive optimisation tolerance.
 #'

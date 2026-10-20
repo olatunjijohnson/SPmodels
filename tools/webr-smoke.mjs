@@ -69,6 +69,11 @@ try {
       east = c(0, 1, 0, 2, 1, 3),
       north = c(0, 0, 1, 1, 2, 2)
     )
+    ordinary_fit <- lm(response ~ exposure, data = dat)
+    prefit_variogram <- sp_variogram(
+      ordinary_fit, coords = ~ east + north, data = dat, bins = 3
+    )
+    stopifnot(identical(prefit_variogram$stage, "pre_fit"))
     control <- sp_control(
       smoothness = 0.5,
       spatial_variance = 1.4,
@@ -92,6 +97,26 @@ try {
     stopifnot(is.finite(as.numeric(logLik(fit))))
     stopifnot(length(prediction$fit) == 1L, is.finite(prediction$se.fit))
     stopifnot(!getFromNamespace(".sp_has_fork_workers", "SPmodels")())
+
+    conditional_variogram <- sp_variogram(
+      fit, residual_type = "conditional", bins = 3
+    )
+    grid <- data.frame(
+      exposure = seq(-0.5, 1.5, length.out = 6),
+      east = seq(0.1, 1.6, length.out = 6),
+      north = seq(0.2, 1.2, length.out = 6)
+    )
+    chunked <- sp_predict_chunked(
+      fit, grid, chunk_size = 2, se.fit = TRUE
+    )
+    draws <- sp_predict_draws(fit, grid[1:4, ], nsim = 8, seed = 17)
+    target <- sp_predict_target(draws)
+    target_table <- as.data.frame(target)
+    stopifnot(identical(conditional_variogram$stage, "post_fit"))
+    stopifnot(length(chunked$fit) == nrow(grid),
+              length(chunked$se.fit) == nrow(grid),
+              nrow(target_table) == 4L,
+              identical(target_table, target$summary))
   `);
   console.log(`WebR ${webR.version} / R ${webR.versionR}: SPmodels install and smoke example passed.`);
 } finally {

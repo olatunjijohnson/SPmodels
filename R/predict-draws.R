@@ -34,7 +34,9 @@
   }
   coordinate_info <- .sp_coordinates(object$coords, newdata,
                                       expected_crs = object$crs)
-  coordinates_new <- coordinate_info$values
+  coordinate_multiplier <- object$coordinate_multiplier
+  if (is.null(coordinate_multiplier)) coordinate_multiplier <- 1
+  coordinates_new <- coordinate_info$values * coordinate_multiplier
   if (nrow(coordinates_new) != nrow(x_new)) {
     stop("Coordinate and predictor rows in `newdata` do not align.",
          call. = FALSE)
@@ -447,6 +449,13 @@
 #'
 #' @return An object of class `spmodels_prediction_draws` containing an
 #'   `nsim` by number-of-locations draw matrix and its defining metadata.
+#'
+#' @details Joint draws require a dense covariance over all prediction rows and
+#'   become expensive as the grid grows. At 1,000 or more locations and at
+#'   least 100 draws, this function warns about the cost. For pointwise means
+#'   and standard errors on large grids, use [sp_predict_chunked()], which is
+#'   exact but does not retain cross-location dependence. Use joint draws when
+#'   spatially dependent uncertainty or draw-based target summaries are needed.
 #' @export
 sp_predict_draws <- function(object, newdata = NULL, nsim = 1000L,
                              target = c("latent", "observation"),
@@ -468,6 +477,14 @@ sp_predict_draws <- function(object, newdata = NULL, nsim = 1000L,
     stop("`parameter_uncertainty` must be TRUE or FALSE.", call. = FALSE)
   }
   design <- .sp_prediction_design(object, newdata, unseen)
+  if (length(design$coordinates) && nrow(design$coordinates) >= 1000L &&
+      as.integer(nsim) >= 100L) {
+    warning(paste0(
+      "Joint prediction draws over at least 1,000 locations can be slow and ",
+      "memory-intensive. Use `sp_predict_chunked()` for exact pointwise ",
+      "means/SEs; it does not provide joint draws or target summaries."
+    ), call. = FALSE)
+  }
   distribution <- if (object$family$family == "gaussian") {
     .sp_joint_gaussian(object, design, target)
   } else {

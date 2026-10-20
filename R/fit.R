@@ -5,6 +5,36 @@
   sqrt(pmax(squared, 0))
 }
 
+.sp_unit_key <- function(units) {
+  key <- tolower(gsub("[^[:alnum:]]", "", trimws(units)))
+  aliases <- list(
+    m = c("m", "meter", "meters", "metre", "metres"),
+    km = c("km", "kilometer", "kilometers", "kilometre", "kilometres"),
+    cm = c("cm", "centimeter", "centimeters", "centimetre", "centimetres"),
+    mm = c("mm", "millimeter", "millimeters", "millimetre", "millimetres"),
+    ft = c("ft", "foot", "feet", "internationalfoot"),
+    mi = c("mi", "mile", "miles", "internationalmile"),
+    us_survey_ft = c("ussurveyfoot", "ussurveyfeet", "footussurvey")
+  )
+  for (name in names(aliases)) if (key %in% aliases[[name]]) return(name)
+  key
+}
+
+.sp_distance_unit_multiplier <- function(source_units, target_units) {
+  if (is.null(source_units) || is.null(target_units)) return(1)
+  source <- .sp_unit_key(source_units)
+  target <- .sp_unit_key(target_units)
+  if (identical(source, target)) return(1)
+  metres <- c(m = 1, km = 1000, cm = 0.01, mm = 0.001,
+              ft = 0.3048, mi = 1609.344,
+              us_survey_ft = 1200 / 3937)
+  if (!source %in% names(metres) || !target %in% names(metres)) {
+    stop(sprintf("Cannot convert coordinate units '%s' to '%s'; use matching units or a recognised linear-unit pair.",
+                 source_units, target_units), call. = FALSE)
+  }
+  unname(metres[[source]] / metres[[target]])
+}
+
 .sp_solve_chol <- function(chol_v, rhs) {
   backsolve(chol_v, forwardsolve(t(chol_v), rhs))
 }
@@ -271,6 +301,20 @@ sp_fit <- function(formula, data, family = stats::gaussian(), coords = NULL,
   y_centered <- y - model_offset
 
   if (!spatial) {
+    prefit_coordinates <- NULL
+    coordinate_info <- NULL
+    coordinate_multiplier <- 1
+    prefit_distance_units <- control$distance_units
+    if (inherits(data, "sf") || !is.null(coords)) {
+      coordinate_info <- .sp_coordinates(coords, data, row_index)
+      if (is.null(prefit_distance_units)) {
+        prefit_distance_units <- coordinate_info$inferred_units
+      }
+      coordinate_multiplier <- .sp_distance_unit_multiplier(
+        coordinate_info$inferred_units, prefit_distance_units
+      )
+      prefit_coordinates <- coordinate_info$values * coordinate_multiplier
+    }
     ordinary <- stats::lm.fit(x, y_centered)
     residual <- as.vector(ordinary$residuals)
     residual_variance <- if (control$estimate) {
@@ -302,12 +346,19 @@ sp_fit <- function(formula, data, family = stats::gaussian(), coords = NULL,
       call = call, formula = formula, terms = terms_object,
       contrasts = attr(x, "contrasts"),
       xlevels = stats::.getXlevels(terms_object, mf),
-      spatial = FALSE, coords = NULL, coordinate_names = NULL,
-      coordinate_source = "none", crs = NULL, distance_units = NULL,
+      spatial = FALSE, coords = coords,
+      coordinate_names = if (is.null(prefit_coordinates)) NULL else
+        colnames(prefit_coordinates),
+      coordinate_source = if (is.null(coordinate_info)) "none" else
+        coordinate_info$source,
+      crs = if (is.null(coordinate_info)) NULL else coordinate_info$crs,
+      distance_units = prefit_distance_units,
+      coordinate_multiplier = coordinate_multiplier,
       family = family, model = mf, x = x, y = y, offset = model_offset,
       data_used = data[row_index, , drop = FALSE], control = control,
       external_offset = "offset" %in% names(call),
-      coordinates = NULL, covariance = covariance, smoothness = NA_real_,
+      coordinates = prefit_coordinates,
+      covariance = covariance, smoothness = NA_real_,
       covariance_estimated = control$estimate,
       covariance_vcov = covariance_vcov,
       coefficients = state$beta, coefficient_vcov = beta_covariance,
@@ -325,6 +376,10 @@ sp_fit <- function(formula, data, family = stats::gaussian(), coords = NULL,
     stop("Supply explicit coordinate units with `sp_control(distance_units = ...)`.",
          call. = FALSE)
   }
+  coordinate_multiplier <- .sp_distance_unit_multiplier(
+    coordinate_info$inferred_units, distance_units
+  )
+  coordinates <- coordinates * coordinate_multiplier
   if (nrow(coordinates) != length(y)) stop("Coordinate and model rows do not align.", call. = FALSE)
   random_specification <- .sp_random_training(
     random, data[row_index, , drop = FALSE]
@@ -576,7 +631,8 @@ sp_fit <- function(formula, data, family = stats::gaussian(), coords = NULL,
     contrasts = attr(x, "contrasts"), xlevels = stats::.getXlevels(terms_object, mf),
     coords = coords, coordinate_names = colnames(coordinates),
     coordinate_source = coordinate_info$source, crs = coordinate_info$crs,
-    distance_units = distance_units, family = family,
+    distance_units = distance_units,
+    coordinate_multiplier = coordinate_multiplier, family = family,
     model = mf, x = x, y = y, offset = model_offset,
     data_used = data[row_index, , drop = FALSE], control = control,
     external_offset = "offset" %in% names(call),
