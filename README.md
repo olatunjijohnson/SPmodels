@@ -48,7 +48,7 @@ following the moving `main` branch:
 ```r
 remotes::install_github(
   "olatunjijohnson/SPmodels",
-  ref = "v0.1.0.9000"
+  ref = "v0.1.0"
 )
 ```
 
