@@ -33,8 +33,10 @@ sp_variogram(
   \item{data}{Data used to evaluate a coordinate formula for an ordinary
   model. Supply the complete source data when coordinates are not in the
   model formula.}
-  \item{distance_units}{Optional unit label for supplied coordinates.
-  Projected \code{sf} data units are converted to this unit when recognised.}
+  \item{distance_units}{Optional target unit for distances. Spatial and
+  non-spatial SPmodels fits are converted from their stored units; projected
+  \code{sf} coordinates are converted when their CRS units are recognised.
+  Numeric coordinate columns are assumed already to use this unit.}
   \item{x}{An object returned by \code{sp_variogram()}.}
   \item{...}{Additional graphical arguments passed to \code{plot}.}
 }

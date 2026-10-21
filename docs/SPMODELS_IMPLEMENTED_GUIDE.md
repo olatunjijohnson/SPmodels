@@ -934,6 +934,27 @@ FALSE)` fit with coordinates, or explicit `coords` and `values`. Coordinates
 must be projected Euclidean coordinates; for numeric columns, supply their
 units with `distance_units` if needed.
 
+To assess the ordinary residual pattern against the exchangeability null,
+add a permutation envelope before fitting the spatial process:
+
+```r
+ordinary_envelope <- sp_variogram_envelope(
+  ordinary,
+  coords = ~ east + north,
+  data = survey_points,
+  method = "permutation",
+  distance_units = "km",
+  seed = 48132
+)
+plot(ordinary_envelope)
+```
+
+The permutation method also accepts a `glm`, a non-spatial SPmodels fit with
+retained coordinates, or `coords` and `values` directly. It permutes the
+selected residual values across the fixed locations; it does not refit the
+ordinary mean model for each permutation. Parametric envelopes remain
+available only after fitting a spatial model.
+
 After fitting a spatial model, use
 `sp_variogram(fit, residual_type = "conditional")` to ask whether spatial
 structure remains in residuals after conditioning on the fitted process. Do

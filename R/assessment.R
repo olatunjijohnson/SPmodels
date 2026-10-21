@@ -87,8 +87,11 @@ simulate.spmodels_fit <- function(object, nsim = 1L, seed = NULL, ...) {
 #' @param data Data used to evaluate a coordinate formula for an ordinary
 #'   model. Pass the complete source data when its coordinate columns were not
 #'   part of that model's formula.
-#' @param distance_units Optional label for supplied coordinates; when `data`
-#'   is projected `sf`, native CRS units are converted to these units.
+#' @param distance_units Optional target unit for distances. Spatial and
+#'   non-spatial SPmodels fits are converted from their stored units; when
+#'   coordinates come from projected `sf` data, recognised CRS units are
+#'   converted. Numeric coordinate columns are assumed already to use this
+#'   unit.
 #'
 #' @return An object of class `spmodels_variogram` containing a `values` data
 #'   frame and metadata.
@@ -104,7 +107,10 @@ sp_variogram <- function(object = NULL, bins = 10L, max_distance = NULL,
       stop("Do not supply `coords`, `values`, or `data` with a spatial fit.",
            call. = FALSE)
     }
-    coordinates <- object$coordinates
+    units <- distance_units
+    if (is.null(units)) units <- object$distance_units
+    multiplier <- .sp_distance_unit_multiplier(object$distance_units, units)
+    coordinates <- object$coordinates * multiplier
     residual_value <- if (object$family$family == "gaussian") {
       if (is.null(residual_type)) residual_type <- "mean"
       if (!residual_type %in% c("mean", "conditional")) {
@@ -124,7 +130,6 @@ sp_variogram <- function(object = NULL, bins = 10L, max_distance = NULL,
       diagnostics[[paste0(residual_type, "_residual")]]
     }
     family_name <- object$family$family
-    units <- object$distance_units
   } else if (inherits(object, "spmodels_fit")) {
     if (!is.null(values)) {
       stop("Do not supply `values` with an `spmodels_fit` object.",
@@ -153,9 +158,14 @@ sp_variogram <- function(object = NULL, bins = 10L, max_distance = NULL,
     } else if (!is.null(coords) || !is.null(data)) {
       stop("Coordinates were retained by this non-spatial fit; do not also supply `coords` or `data`.",
            call. = FALSE)
+    } else {
+      units <- distance_units
+      if (is.null(units)) units <- object$distance_units
+      coordinates <- coordinates * .sp_distance_unit_multiplier(
+        object$distance_units, units
+      )
     }
     family_name <- object$family$family
-    units <- object$distance_units
   } else if (inherits(object, c("lm", "glm"))) {
     if (!is.null(values)) {
       stop("Do not supply `values` with an `lm` or `glm` object.",
@@ -231,17 +241,19 @@ sp_variogram <- function(object = NULL, bins = 10L, max_distance = NULL,
   if (is.null(fitted_model) || !gaussian) {
     fitted <- rep(NA_real_, length(midpoint))
   } else {
+    fitted_scale <- fitted_model$covariance[["scale"]] *
+      .sp_distance_unit_multiplier(fitted_model$distance_units, units)
     if (is.null(fitted_model$temporal)) {
       fitted <- fitted_model$covariance[["nugget_variance"]] +
         fitted_model$covariance[["spatial_variance"]] *
-        (1 - matern_cor(midpoint, fitted_model$covariance[["scale"]],
+        (1 - matern_cor(midpoint, fitted_scale,
                         fitted_model$smoothness))
     } else {
       pair_time_lag <- .sp_temporal_lag(fitted_model$temporal_values)[keep_triangle]
       fitted_pair <- fitted_model$covariance[["nugget_variance"]] +
         fitted_model$covariance[["spatial_variance"]] *
         (1 - spacetime_cor(pair_distance, pair_time_lag,
-          fitted_model$covariance[["scale"]], fitted_model$smoothness,
+          fitted_scale, fitted_model$smoothness,
           fitted_model$temporal_scale))
       fitted <- as.numeric(tapply(fitted_pair[retained], group, mean))
     }
@@ -273,6 +285,8 @@ sp_variogram <- function(object = NULL, bins = 10L, max_distance = NULL,
     stringsAsFactors = FALSE
   )
   structure(list(values = values, residual_type = residual_type,
+                 coordinates = coordinates,
+                 residuals = as.numeric(residual_value),
                  family = family_name, seed = seed,
                  stage = if (fitted_spatial &&
                    (family_name != "gaussian" ||
@@ -365,24 +379,29 @@ plot.spmodels_variogram <- function(x, ...) {
 #' fitting route before residual calculation. Pointwise envelopes and a global
 #' curve-discrepancy p-value are returned from the same simulated curves.
 #'
-#' @param object A fitted spatial `spmodels_fit` object.
+#' @param object A spatial or non-spatial `spmodels_fit`, an `lm`/`glm`
+#'   object, or `NULL` when supplying `coords` and `values` directly. The
+#'   permutation method supports all of these pre-fit inputs. The parametric
+#'   method requires a fitted spatial model.
 #' @param nsim Positive number of Monte Carlo curves.
 #' @param method Permute residuals across fixed locations, or simulate from the
 #'   fitted model while keeping fitted parameters fixed.
 #' @param level Pointwise envelope probability strictly between zero and one.
 #' @param bins,max_distance,residual_type Passed to [sp_variogram()].
+#' @param coords,values,data,distance_units Passed to [sp_variogram()] for
+#'   pre-fit diagnostics. For numeric coordinates, values are assumed already
+#'   to use `distance_units`; projected `sf` coordinates are converted when
+#'   their CRS linear units are recognised.
 #' @param seed Optional integer seed local to this call.
 #'
 #' @return An object of class `spmodels_variogram_envelope` containing observed
 #'   and simulated curves, pointwise limits and a global Monte Carlo p-value.
 #' @export
 sp_variogram_envelope <- function(
-    object, nsim = 999L, method = c("permutation", "parametric"),
+    object = NULL, nsim = 999L, method = c("permutation", "parametric"),
     level = 0.95, bins = 10L, max_distance = NULL,
-    residual_type = NULL, seed = NULL) {
-  if (!inherits(object, "spmodels_fit") || !isTRUE(object$spatial)) {
-    stop("`object` must be a fitted spatial model.", call. = FALSE)
-  }
+    residual_type = NULL, seed = NULL, coords = NULL, values = NULL,
+    data = NULL, distance_units = NULL) {
   if (!is.numeric(nsim) || length(nsim) != 1L || is.na(nsim) ||
       !is.finite(nsim) || nsim < 1 || nsim != as.integer(nsim)) {
     stop("`nsim` must be one positive integer.", call. = FALSE)
@@ -393,39 +412,37 @@ sp_variogram_envelope <- function(
          call. = FALSE)
   }
   method <- match.arg(method)
-  gaussian <- object$family$family == "gaussian"
-  choices <- if (gaussian) c("mean", "conditional") else
-    c("randomized_quantile", "pearson", "deviance")
-  if (is.null(residual_type)) residual_type <- choices[[1L]]
-  if (!is.character(residual_type) || length(residual_type) != 1L ||
-      is.na(residual_type) || !residual_type %in% choices) {
-    stop(sprintf("`residual_type` must be one of: %s.",
-                 paste(choices, collapse = ", ")), call. = FALSE)
+  fitted_spatial <- inherits(object, "spmodels_fit") &&
+    isTRUE(object$spatial)
+  if (method == "parametric" && !fitted_spatial) {
+    stop("`method = \"parametric\"` requires a fitted spatial model; use the permutation method for pre-fit diagnostics.",
+         call. = FALSE)
   }
-  if (!gaussian && method == "parametric" && isTRUE(object$external_offset)) {
+  if (!is.null(residual_type) &&
+      (!is.character(residual_type) || length(residual_type) != 1L ||
+       is.na(residual_type))) {
+    stop("`residual_type` must be one non-missing character value.",
+         call. = FALSE)
+  }
+  gaussian <- fitted_spatial && object$family$family == "gaussian"
+  if (fitted_spatial && !gaussian && method == "parametric" &&
+      isTRUE(object$external_offset)) {
     stop("Non-Gaussian parametric envelopes require offsets to be written in the formula.",
          call. = FALSE)
   }
   observed <- sp_variogram(object, bins = bins, max_distance = max_distance,
-                           residual_type = residual_type, seed = seed)
+    residual_type = residual_type, seed = seed, coords = coords,
+    values = values, data = data, distance_units = distance_units)
+  residual_type <- observed$residual_type
   bins <- nrow(observed$values)
-  distance_matrix <- .sp_dist(object$coordinates)
+  distance_matrix <- .sp_dist(observed$coordinates)
   triangle <- lower.tri(distance_matrix)
   pair_distance <- distance_matrix[triangle]
   retained <- pair_distance <= observed$max_distance
   breaks <- seq(0, observed$max_distance, length.out = bins + 1L)
   group <- cut(pair_distance[retained], breaks = breaks,
                include.lowest = TRUE, right = TRUE, labels = FALSE)
-  observed_residual <- if (gaussian) {
-    if (residual_type == "mean") object$residual_mean else
-      stats::residuals(object)
-  } else {
-    diagnostics <- sp_diagnostics(object, seed = seed)
-    switch(residual_type,
-      randomized_quantile = diagnostics$randomized_quantile_residual,
-      pearson = diagnostics$pearson_residual,
-      deviance = diagnostics$deviance_residual)
-  }
+  observed_residual <- observed$residuals
   seed_scope <- .sp_seed_scope(seed)
   if (!is.null(seed_scope)) {
     on.exit(.sp_restore_seed(seed_scope), add = TRUE)
@@ -557,10 +574,11 @@ sp_variogram_envelope <- function(
     observed_statistic = observed_statistic,
     simulated_statistic = simulated_statistic,
     residual_type = residual_type,
-    family = object$family$family,
+    family = observed$family,
+    stage = observed$stage,
     refit_convergence = refit_convergence,
     refit_warnings = refit_warnings,
-    distance_units = object$distance_units,
+    distance_units = observed$distance_units,
     max_distance = observed$max_distance, nsim = as.integer(nsim),
     seed = seed, call = match.call()
   ), class = "spmodels_variogram_envelope")

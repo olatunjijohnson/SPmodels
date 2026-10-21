@@ -88,8 +88,68 @@ stopifnot(identical(parametric_one$simulations,
           is.finite(parametric_one$p_value))
 
 independent <- sp_fit(y ~ x, dat, spatial = FALSE)
+independent_with_coords <- sp_fit(
+  y ~ x, dat, spatial = FALSE, coords = ~ east + north,
+  control = sp_control(distance_units = "km")
+)
+ordinary <- lm(y ~ x, dat)
+ordinary_envelope <- sp_variogram_envelope(
+  ordinary, coords = ~ east + north, data = dat, nsim = 39,
+  method = "permutation", bins = 4, distance_units = "km", seed = 101
+)
+nonspatial_envelope <- sp_variogram_envelope(
+  independent_with_coords, nsim = 39, method = "permutation", bins = 4,
+  seed = 101
+)
+raw_envelope <- sp_variogram_envelope(
+  coords = as.matrix(dat[c("east", "north")]),
+  values = residuals(ordinary), nsim = 39, method = "permutation",
+  bins = 4, distance_units = "km", seed = 101
+)
+stopifnot(identical(ordinary_envelope$stage, "pre_fit"),
+          identical(ordinary_envelope$method, "permutation"),
+          close(ordinary_envelope$simulations,
+                nonspatial_envelope$simulations),
+          close(ordinary_envelope$simulations, raw_envelope$simulations),
+          identical(ordinary_envelope$distance_units, "km"))
+
+binary <- transform(dat, present = as.integer(y > median(y)))
+ordinary_glm <- glm(present ~ x, data = binary, family = binomial())
+glm_envelope <- sp_variogram_envelope(
+  ordinary_glm, coords = ~ east + north, data = binary, nsim = 19,
+  method = "permutation", bins = 4, seed = 102
+)
+stopifnot(identical(glm_envelope$stage, "pre_fit"),
+          identical(glm_envelope$family, "binomial"))
+
+if (requireNamespace("sf", quietly = TRUE)) {
+  projected <- sf::st_as_sf(
+    transform(dat, east = 371000 + east * 1000,
+              north = 408000 + north * 1000),
+    coords = c("east", "north"), crs = 27700
+  )
+  ordinary_projected <- lm(y ~ x, data = projected)
+  variogram_km <- sp_variogram(
+    ordinary_projected, data = projected, distance_units = "km", bins = 4
+  )
+  variogram_m <- sp_variogram(
+    ordinary_projected, data = projected, distance_units = "m", bins = 4
+  )
+  stopifnot(identical(variogram_km$distance_units, "km"),
+            identical(variogram_m$distance_units, "m"),
+            close(variogram_m$values$distance,
+                  variogram_km$values$distance * 1000))
+  spatial_variogram_km <- sp_variogram(fit, bins = 4)
+  spatial_variogram_m <- sp_variogram(fit, distance_units = "m", bins = 4)
+  stopifnot(close(spatial_variogram_m$values$distance,
+                  spatial_variogram_km$values$distance * 1000))
+}
+
 expect_error(sp_variogram_envelope(independent, nsim = 9),
-             "fitted spatial")
+             "Supply two coordinate columns")
+expect_error(sp_variogram_envelope(independent_with_coords,
+                                   method = "parametric", nsim = 9),
+             "requires a fitted spatial model")
 expect_error(sp_variogram_envelope(fit, nsim = 0), "positive integer")
 expect_error(sp_variogram_envelope(fit, nsim = 9, level = 1),
              "strictly between")

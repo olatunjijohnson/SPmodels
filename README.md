@@ -42,14 +42,13 @@ remotes::install_github("olatunjijohnson/SPmodels")
 library(SPmodels)
 ```
 
-For a reproducible course, pin the source installation to a reviewed commit
-instead of following the moving `main` branch. Replace `<commit-sha>` with the
-40-character commit selected for the course:
+For a reproducible course, install the tagged course snapshot rather than
+following the moving `main` branch:
 
 ```r
 remotes::install_github(
   "olatunjijohnson/SPmodels",
-  ref = "<commit-sha>"
+  ref = "v0.1.0.9000"
 )
 ```
 

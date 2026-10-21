@@ -73,7 +73,14 @@ try {
     prefit_variogram <- sp_variogram(
       ordinary_fit, coords = ~ east + north, data = dat, bins = 3
     )
+    prefit_envelope <- sp_variogram_envelope(
+      ordinary_fit, coords = ~ east + north, data = dat,
+      method = "permutation", nsim = 19, bins = 3, seed = 18
+    )
     stopifnot(identical(prefit_variogram$stage, "pre_fit"))
+    stopifnot(identical(prefit_envelope$stage, "pre_fit"),
+              identical(prefit_envelope$method, "permutation"),
+              is.finite(prefit_envelope$p_value))
     control <- sp_control(
       smoothness = 0.5,
       spatial_variance = 1.4,
