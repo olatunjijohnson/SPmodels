@@ -42,6 +42,16 @@ remotes::install_github("olatunjijohnson/SPmodels")
 library(SPmodels)
 ```
 
+After the R-universe build has completed, install the released package with:
+
+```r
+options(repos = c(
+  olatunjijohnson = "https://olatunjijohnson.r-universe.dev",
+  CRAN = "https://cloud.r-project.org"
+))
+install.packages("SPmodels")
+```
+
 For a reproducible course, install the tagged course snapshot rather than
 following the moving `main` branch:
 
