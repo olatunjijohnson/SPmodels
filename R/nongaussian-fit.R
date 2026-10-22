@@ -202,6 +202,7 @@
     nugget_variance = if (is.null(control$nugget_variance)) 0.2 else
       control$nugget_variance
   )
+  covariance_estimated_names <- .sp_estimated_covariance_names(control)
   random_initial <- .sp_resolve_random_variance(
     control$random_variance,
     if (is.null(random_specification)) character() else
@@ -209,7 +210,7 @@
     control$estimate, default = 0.1
   )
   p <- ncol(x)
-  covariance_count <- if (control$estimate) 3L else 0L
+  covariance_count <- length(covariance_estimated_names)
   random_count <- if (control$estimate) length(random_initial) else 0L
   random_slope_parameterization <- .sp_random_slope_parameterization(
     random_slope_specification
@@ -222,7 +223,8 @@
   intervention_count <- if (intervention_estimated) 2L else 0L
   parameter_start <- c(
     initial_beta,
-    if (control$estimate) log(initial_covariance) else NULL,
+    if (covariance_count)
+      log(initial_covariance[covariance_estimated_names]) else NULL,
     if (random_count) log(random_initial) else NULL,
     random_slope_parameterization$values,
     if (temporal_estimated) log(time$scale) else NULL,
@@ -231,7 +233,7 @@
   )
   names(parameter_start) <- c(
     colnames(x),
-    if (control$estimate) paste0("log_", names(initial_covariance)) else NULL,
+    if (covariance_count) paste0("log_", covariance_estimated_names) else NULL,
     if (random_count) paste0("log_random::", names(random_initial)) else NULL,
     random_slope_parameterization$names,
     if (temporal_estimated) "log_temporal_scale" else NULL,
@@ -253,10 +255,11 @@
   objective <- function(parameters) {
     value <- tryCatch({
       beta <- parameters[seq_len(p)]
-      covariance <- if (control$estimate) {
-        stats::setNames(exp(parameters[p + seq_len(3L)]),
-                        names(initial_covariance))
-      } else initial_covariance
+      covariance <- initial_covariance
+      if (covariance_count) {
+        covariance[covariance_estimated_names] <-
+          exp(parameters[p + seq_len(covariance_count)])
+      }
       random_variance <- if (random_count) {
         answer <- exp(parameters[p + covariance_count + seq_len(random_count)])
         stats::setNames(answer, names(random_initial))
@@ -300,8 +303,11 @@
   }
   lower <- c(
     rep(-Inf, p),
-    if (control$estimate) log(c(1e-7,
-      min(positive_distances) * 1e-4, 1e-7)) else NULL,
+    if (covariance_count) log(c(
+      spatial_variance = 1e-7,
+      scale = min(positive_distances) * 1e-4,
+      nugget_variance = 1e-7
+    )[covariance_estimated_names]) else NULL,
     if (random_count) rep(log(1e-7), random_count) else NULL,
     unlist(lapply(random_slope_parameterization$components, function(details) {
       index <- details$index
@@ -318,8 +324,11 @@
   )
   upper <- c(
     rep(Inf, p),
-    if (control$estimate) log(c(1e5,
-      max(positive_distances) * 1e4, 1e5)) else NULL,
+    if (covariance_count) log(c(
+      spatial_variance = 1e5,
+      scale = max(positive_distances) * 1e4,
+      nugget_variance = 1e5
+    )[covariance_estimated_names]) else NULL,
     if (random_count) rep(log(1e5), random_count) else NULL,
     unlist(lapply(random_slope_parameterization$components, function(details) {
       index <- details$index
@@ -349,10 +358,11 @@
   )
   beta <- optimisation$par[seq_len(p)]
   names(beta) <- colnames(x)
-  covariance <- if (control$estimate) {
-    stats::setNames(exp(optimisation$par[p + seq_len(3L)]),
-                    names(initial_covariance))
-  } else initial_covariance
+  covariance <- initial_covariance
+  if (covariance_count) {
+    covariance[covariance_estimated_names] <-
+      exp(optimisation$par[p + seq_len(covariance_count)])
+  }
   random_variance <- if (random_count) {
     answer <- exp(optimisation$par[p + covariance_count + seq_len(random_count)])
     stats::setNames(answer, names(random_initial))
@@ -401,12 +411,13 @@
   dimnames(coefficient_vcov) <- list(colnames(x), colnames(x))
   covariance_vcov <- matrix(NA_real_, 3L, 3L,
     dimnames = list(names(covariance), names(covariance)))
-  if (control$estimate && all(is.finite(parameter_vcov))) {
-    log_indices <- p + seq_len(3L)
-    jacobian <- diag(unname(covariance), 3L)
-    covariance_vcov <- jacobian %*%
+  if (covariance_count && all(is.finite(parameter_vcov))) {
+    log_indices <- p + seq_len(covariance_count)
+    jacobian <- diag(unname(covariance[covariance_estimated_names]),
+                     covariance_count)
+    covariance_vcov[covariance_estimated_names,
+      covariance_estimated_names] <- jacobian %*%
       parameter_vcov[log_indices, log_indices, drop = FALSE] %*% jacobian
-    dimnames(covariance_vcov) <- list(names(covariance), names(covariance))
   }
   random_variance_vcov <- matrix(
     NA_real_, length(random_variance), length(random_variance),
@@ -497,7 +508,8 @@
     intervention_vcov = intervention_vcov,
     external_offset = "offset" %in% names(call),
     covariance = covariance, smoothness = control$smoothness,
-    covariance_estimated = control$estimate,
+    covariance_estimated = covariance_count > 0L,
+    covariance_estimated_names = covariance_estimated_names,
     covariance_vcov = covariance_vcov, coefficients = beta,
     coefficient_vcov = coefficient_vcov,
     parameter_vcov = parameter_vcov,

@@ -301,6 +301,9 @@ sp_fit <- function(formula, data, family = stats::gaussian(), coords = NULL,
   y_centered <- y - model_offset
 
   if (!spatial) {
+    covariance_estimated_names <- .sp_estimated_covariance_names(
+      control, spatial = FALSE
+    )
     prefit_coordinates <- NULL
     coordinate_info <- NULL
     coordinate_multiplier <- 1
@@ -317,7 +320,7 @@ sp_fit <- function(formula, data, family = stats::gaussian(), coords = NULL,
     }
     ordinary <- stats::lm.fit(x, y_centered)
     residual <- as.vector(ordinary$residuals)
-    residual_variance <- if (control$estimate) {
+    residual_variance <- if (length(covariance_estimated_names)) {
       mean(residual^2)
     } else {
       if (is.null(control$nugget_variance)) {
@@ -338,7 +341,7 @@ sp_fit <- function(formula, data, family = stats::gaussian(), coords = NULL,
                     nugget_variance = residual_variance)
     covariance_vcov <- matrix(NA_real_, 3L, 3L,
                               dimnames = list(names(covariance), names(covariance)))
-    if (control$estimate) {
+    if (length(covariance_estimated_names)) {
       covariance_vcov["nugget_variance", "nugget_variance"] <-
         2 * residual_variance^2 / length(y)
     }
@@ -359,7 +362,8 @@ sp_fit <- function(formula, data, family = stats::gaussian(), coords = NULL,
       external_offset = "offset" %in% names(call),
       coordinates = prefit_coordinates,
       covariance = covariance, smoothness = NA_real_,
-      covariance_estimated = control$estimate,
+      covariance_estimated = length(covariance_estimated_names) > 0L,
+      covariance_estimated_names = covariance_estimated_names,
       covariance_vcov = covariance_vcov,
       coefficients = state$beta, coefficient_vcov = beta_covariance,
       residual_mean = state$residual, fitted_state = state,
@@ -419,6 +423,7 @@ sp_fit <- function(formula, data, family = stats::gaussian(), coords = NULL,
     scale = if (is.null(control$scale)) stats::median(positive_distances) else control$scale,
     nugget_variance = if (is.null(control$nugget_variance)) 0.2 * response_variance else control$nugget_variance
   )
+  covariance_estimated_names <- .sp_estimated_covariance_names(control)
   random_initial <- .sp_resolve_random_variance(
     control$random_variance,
     if (is.null(random_specification)) character() else
@@ -430,7 +435,7 @@ sp_fit <- function(formula, data, family = stats::gaussian(), coords = NULL,
     random_slope_specification
   )
   parameter_initial <- c(
-    initial,
+    initial[covariance_estimated_names],
     if (length(random_initial)) stats::setNames(
       random_initial, paste0("random::", names(random_initial))
     ) else numeric(),
@@ -438,7 +443,9 @@ sp_fit <- function(formula, data, family = stats::gaussian(), coords = NULL,
       c(temporal_scale = time$scale) else numeric()
   )
   optimisation_initial <- c(
-    stats::setNames(log(parameter_initial), paste0("log_", names(parameter_initial))),
+    if (length(parameter_initial)) stats::setNames(
+      log(parameter_initial), paste0("log_", names(parameter_initial))
+    ) else numeric(),
     random_slope_parameterization$values
   )
 
@@ -447,7 +454,12 @@ sp_fit <- function(formula, data, family = stats::gaussian(), coords = NULL,
     d_min <- min(positive_distances)
     d_max <- max(positive_distances)
     variance_floor <- max(response_variance, 1) * 1e-10
-    lower <- c(log(c(variance_floor, d_min * 1e-4, variance_floor,
+    covariance_lower <- c(spatial_variance = variance_floor,
+      scale = d_min * 1e-4, nugget_variance = variance_floor)
+    covariance_upper <- c(spatial_variance = max(response_variance, 1) * 1e10,
+      scale = d_max * 1e4,
+      nugget_variance = max(response_variance, 1) * 1e10)
+    lower <- c(log(c(covariance_lower[covariance_estimated_names],
                    rep(variance_floor, length(random_initial)),
                    if (!is.null(time) && isTRUE(time$estimate)) {
                      positive_time <- temporal_lag[upper.tri(temporal_lag) &
@@ -462,8 +474,7 @@ sp_fit <- function(formula, data, family = stats::gaussian(), coords = NULL,
             -sqrt(max(response_variance, 1) * 1e10)
         }, numeric(1L))
       }), use.names = FALSE))
-    upper <- c(log(c(max(response_variance, 1) * 1e10, d_max * 1e4,
-                   max(response_variance, 1) * 1e10,
+    upper <- c(log(c(covariance_upper[covariance_estimated_names],
                    rep(max(response_variance, 1) * 1e10,
                        length(random_initial)),
                    if (!is.null(time) && isTRUE(time$estimate)) {
@@ -484,7 +495,9 @@ sp_fit <- function(formula, data, family = stats::gaussian(), coords = NULL,
     objective <- function(transformed_pars) {
       values <- stats::setNames(exp(transformed_pars[seq_len(base_count)]),
                                 names(parameter_initial))
-      pars <- values[names(initial)]
+      pars <- initial
+      pars[covariance_estimated_names] <-
+        values[covariance_estimated_names]
       random_values <- if (length(random_initial)) {
         answer <- values[paste0("random::", names(random_initial))]
         names(answer) <- names(random_initial)
@@ -521,7 +534,9 @@ sp_fit <- function(formula, data, family = stats::gaussian(), coords = NULL,
     fitted_parameters <- stats::setNames(
       exp(optimisation$par[seq_len(length(parameter_initial))]),
                                          names(parameter_initial))
-    covariance <- fitted_parameters[names(initial)]
+    covariance <- initial
+    covariance[covariance_estimated_names] <-
+      fitted_parameters[covariance_estimated_names]
     random_variance <- if (length(random_initial)) {
       answer <- fitted_parameters[paste0("random::", names(random_initial))]
       names(answer) <- names(random_initial)
@@ -590,7 +605,8 @@ sp_fit <- function(formula, data, family = stats::gaussian(), coords = NULL,
       dimnames(log_vcov) <- list(names(optimisation_initial),
                                  names(optimisation_initial))
       transformed_parameter_vcov <- log_vcov
-      fitted_values <- c(covariance, if (length(random_variance))
+      fitted_values <- c(covariance[covariance_estimated_names],
+        if (length(random_variance))
         stats::setNames(random_variance,
                         paste0("random::", names(random_variance))) else
           numeric(), if (!is.null(time) && isTRUE(time$estimate))
@@ -601,9 +617,12 @@ sp_fit <- function(formula, data, family = stats::gaussian(), coords = NULL,
       variance_parameter_vcov <- jacobian %*% base_log_vcov %*% jacobian
       dimnames(variance_parameter_vcov) <- list(names(fitted_values),
                                                 names(fitted_values))
-      covariance_vcov <- variance_parameter_vcov[names(covariance),
-                                                  names(covariance), drop = FALSE]
-      dimnames(covariance_vcov) <- list(names(covariance), names(covariance))
+      if (length(covariance_estimated_names)) {
+        covariance_vcov[covariance_estimated_names,
+          covariance_estimated_names] <- variance_parameter_vcov[
+            covariance_estimated_names, covariance_estimated_names,
+            drop = FALSE]
+      }
       if (length(random_variance)) {
         random_names <- paste0("random::", names(random_variance))
         random_variance_vcov <- variance_parameter_vcov[random_names,
@@ -654,7 +673,9 @@ sp_fit <- function(formula, data, family = stats::gaussian(), coords = NULL,
         NA_real_,
     variance_parameter_vcov = variance_parameter_vcov,
     transformed_parameter_vcov = transformed_parameter_vcov,
-    smoothness = control$smoothness, covariance_estimated = control$estimate,
+    smoothness = control$smoothness,
+    covariance_estimated = length(covariance_estimated_names) > 0L,
+    covariance_estimated_names = covariance_estimated_names,
     covariance_vcov = covariance_vcov,
     coefficients = state$beta, coefficient_vcov = beta_covariance,
     residual_mean = state$residual, fitted_state = state,

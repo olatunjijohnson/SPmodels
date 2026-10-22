@@ -845,8 +845,9 @@ sp_simulation_recovery <- function(object, nsim = 100L, seed = NULL,
   slope_truth <- .sp_random_slope_estimated_parameters(
     object$random_slope_specification
   )
+  covariance_names <- .sp_fitted_covariance_names(object)
   truth <- c(object$coefficients,
-    if (object$covariance_estimated) object$covariance else NULL,
+    if (length(covariance_names)) object$covariance[covariance_names] else NULL,
     if (object$covariance_estimated && length(object$random_variance))
       stats::setNames(object$random_variance,
                       paste0("random::", names(object$random_variance))) else NULL,
@@ -897,7 +898,8 @@ sp_simulation_recovery <- function(object, nsim = 100L, seed = NULL,
       return(list(error = conditionMessage(attempt)))
     }
     fitted_parameters <- c(attempt$coefficients,
-      if (object$covariance_estimated) attempt$covariance else NULL,
+      if (length(covariance_names))
+        attempt$covariance[covariance_names] else NULL,
       if (object$covariance_estimated && length(object$random_variance))
         stats::setNames(attempt$random_variance,
                         paste0("random::", names(attempt$random_variance))) else NULL,
@@ -912,8 +914,8 @@ sp_simulation_recovery <- function(object, nsim = 100L, seed = NULL,
         c(alpha = attempt$intervention$alpha,
           decay = attempt$intervention$decay) else NULL)
     fitted_se <- c(sqrt(diag(attempt$coefficient_vcov)),
-      if (object$covariance_estimated)
-        sqrt(diag(attempt$covariance_vcov)) else NULL,
+      if (length(covariance_names))
+        sqrt(diag(attempt$covariance_vcov))[covariance_names] else NULL,
       if (object$covariance_estimated && length(object$random_variance))
         stats::setNames(sqrt(diag(attempt$random_variance_vcov)),
           paste0("random::", names(attempt$random_variance))) else NULL,
@@ -1036,7 +1038,7 @@ sp_simulation_grid <- function(object, values, prefix = "scenario") {
     object$random_slope_specification
   )
   recoverable <- c(names(object$coefficients),
-    if (isTRUE(object$covariance_estimated)) names(object$covariance) else NULL,
+    .sp_fitted_covariance_names(object),
     if (isTRUE(object$covariance_estimated) && length(object$random_variance))
       paste0("random::", names(object$random_variance)) else NULL,
     if (length(slope_parameters))

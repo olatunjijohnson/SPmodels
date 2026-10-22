@@ -241,6 +241,7 @@ sp_fit_neighbor <- function(
     nugget_variance = if (is.null(control$nugget_variance))
       0.2 * response_variance else control$nugget_variance
   )
+  covariance_estimated_names <- .sp_estimated_covariance_names(control)
   if (!control$estimate && any(vapply(
     list(control$spatial_variance, control$scale, control$nugget_variance),
     is.null, logical(1)))) {
@@ -250,14 +251,16 @@ sp_fit_neighbor <- function(
   optimisation <- NULL
   if (control$estimate) {
     variance_floor <- max(response_variance, 1) * 1e-10
-    lower <- log(c(variance_floor, distance_range[["minimum"]] * 1e-4,
-                   variance_floor))
-    upper <- log(c(max(response_variance, 1) * 1e10,
-                   distance_range[["maximum"]] * 1e4,
-                   max(response_variance, 1) * 1e10))
+    lower <- log(c(spatial_variance = variance_floor,
+      scale = distance_range[["minimum"]] * 1e-4,
+      nugget_variance = variance_floor)[covariance_estimated_names])
+    upper <- log(c(spatial_variance = max(response_variance, 1) * 1e10,
+      scale = distance_range[["maximum"]] * 1e4,
+      nugget_variance = max(response_variance, 1) * 1e10
+    )[covariance_estimated_names])
     objective <- function(log_parameters) {
-      covariance <- stats::setNames(exp(log_parameters),
-                                    names(covariance_initial))
+      covariance <- covariance_initial
+      covariance[covariance_estimated_names] <- exp(log_parameters)
       state <- .sp_neighbor_gaussian_state(
         covariance, coordinates, graph, x, y_centered, control$smoothness
       )
@@ -265,14 +268,15 @@ sp_fit_neighbor <- function(
         -state$log_likelihood
     }
     optimisation <- stats::optim(
-      log(covariance_initial), objective, method = "L-BFGS-B",
+      log(covariance_initial[covariance_estimated_names]), objective,
+      method = "L-BFGS-B",
       lower = lower, upper = upper,
       control = list(maxit = control$maxit,
                      factr = control$reltol / .Machine$double.eps,
                      trace = if (verbose) 1 else 0), hessian = TRUE
     )
-    covariance <- stats::setNames(exp(optimisation$par),
-                                  names(covariance_initial))
+    covariance <- covariance_initial
+    covariance[covariance_estimated_names] <- exp(optimisation$par)
     if (optimisation$convergence != 0L) {
       warning(sprintf("Neighbor-likelihood optimisation ended with convergence code %d: %s",
                       optimisation$convergence, optimisation$message),
@@ -296,8 +300,10 @@ sp_fit_neighbor <- function(
                              error = function(e) NULL)
     if (!is.null(hessian_root)) {
       log_vcov <- chol2inv(hessian_root)
-      covariance_vcov <- diag(covariance) %*% log_vcov %*% diag(covariance)
-      dimnames(covariance_vcov) <- list(names(covariance), names(covariance))
+      jacobian <- diag(unname(covariance[covariance_estimated_names]),
+                       length(covariance_estimated_names))
+      covariance_vcov[covariance_estimated_names,
+        covariance_estimated_names] <- jacobian %*% log_vcov %*% jacobian
     }
   }
   structure(list(
@@ -313,7 +319,9 @@ sp_fit_neighbor <- function(
     data_used = data[row_index, , drop = FALSE], control = control,
     external_offset = "offset" %in% names(call), coordinates = coordinates,
     covariance = covariance, covariance_vcov = covariance_vcov,
-    covariance_estimated = control$estimate, smoothness = control$smoothness,
+    covariance_estimated = length(covariance_estimated_names) > 0L,
+    covariance_estimated_names = covariance_estimated_names,
+    smoothness = control$smoothness,
     random_variance = numeric(), random_variance_vcov = matrix(numeric(), 0, 0),
     random_slope_specification = NULL, temporal = NULL, intervention = NULL,
     coefficients = state$beta, coefficient_vcov = state$coefficient_vcov,
@@ -337,7 +345,8 @@ vcov.spmodels_neighbor_fit <- function(object, ...) object$coefficient_vcov
 logLik.spmodels_neighbor_fit <- function(object, ...) {
   value <- object$log_likelihood
   attr(value, "nobs") <- object$nobs
-  attr(value, "df") <- object$rank + if (object$covariance_estimated) 3L else 0L
+  attr(value, "df") <- object$rank +
+    length(.sp_fitted_covariance_names(object))
   class(value) <- "logLik"
   value
 }
@@ -357,9 +366,11 @@ print.spmodels_neighbor_fit <- function(x, ...) {
   cat("Observations:", x$nobs, "\n")
   cat("Predecessors:", x$neighbors, "(", x$ordering, "order)\n")
   cat("Distance units:", x$distance_units, "\n")
-  cat("Covariance parameters", if (x$covariance_estimated)
-    "(estimated):\n" else "(fixed):\n")
+  cat("Covariance parameters:\n")
   print(c(x$covariance, smoothness = x$smoothness))
+  cat("Status:", paste(paste0(names(x$covariance), "=",
+    ifelse(names(x$covariance) %in% .sp_fitted_covariance_names(x),
+           "estimated", "fixed")), collapse = ", "), "\n")
   invisible(x)
 }
 
@@ -374,6 +385,7 @@ summary.spmodels_neighbor_fit <- function(object, ...) {
     covariance_table = cbind(Estimate = object$covariance,
       `Std. Error` = sqrt(diag(object$covariance_vcov))),
     covariance_estimated = object$covariance_estimated,
+    covariance_estimated_names = .sp_fitted_covariance_names(object),
     smoothness = object$smoothness, log_likelihood = stats::logLik(object),
     nobs = object$nobs, neighbors = object$neighbors,
     ordering = object$ordering, distance_units = object$distance_units,
@@ -388,8 +400,7 @@ print.summary.spmodels_neighbor_fit <- function(x, ...) {
   print(x$call)
   cat("\nMean coefficients:\n")
   stats::printCoefmat(x$coefficients)
-  cat("\nCovariance parameters", if (x$covariance_estimated)
-    "(estimated):\n" else "(fixed):\n")
+  cat("\nCovariance parameters:\n")
   print(x$covariance_table)
   cat("Fixed smoothness:", format(x$smoothness), "\n")
   cat("Predecessors:", x$neighbors, "(", x$ordering, "order)\n")

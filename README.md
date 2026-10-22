@@ -58,7 +58,7 @@ following the moving `main` branch:
 ```r
 remotes::install_github(
   "olatunjijohnson/SPmodels",
-  ref = "v0.1.0"
+  ref = "v0.1.1"
 )
 ```
 
@@ -99,6 +99,23 @@ fit <- sp_fit(
 summary(fit)
 predict(fit, newdata = prediction_points, se.fit = TRUE)
 ```
+
+By default the spatial variance, scale, and nugget are estimated. To fit a
+model with no nugget while still estimating the spatial variance and scale,
+set the nugget to zero:
+
+```r
+no_nugget_fit <- sp_fit(
+  outcome ~ rainfall + elevation,
+  data = survey_points,
+  coords = ~ east_km + north_km,
+  control = sp_control(nugget_variance = 0, distance_units = "km")
+)
+```
+
+Use `estimate_nugget = FALSE` with a positive `nugget_variance` to hold that
+positive value fixed. Use `estimate = FALSE` only when all covariance
+parameters are to be fixed.
 
 From a shell in a local source checkout, you can also install the package with:
 

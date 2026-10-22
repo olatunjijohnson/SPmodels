@@ -44,7 +44,7 @@ The assumptions are:
   common unit;
 - dependence is stationary and isotropic, so it depends only on distance;
 - the Matérn smoothness \(\nu>0\) is fixed;
-- \(\sigma_s^2>0\), \(\rho>0\), and \(\tau^2>0\);
+- \(\sigma_s^2>0\), \(\rho>0\), and \(\tau^2\geq 0\);
 - the observation-level errors are mutually independent and independent of
   the spatial process;
 - the design matrix has full column rank.
@@ -76,10 +76,12 @@ and, after adding the independent nugget,
 V=\operatorname{Var}(Y)=\sigma_s^2R+\tau^2I.                       \tag{G-05}
 \]
 
-Because the nugget is strictly positive, \(V\) is positive definite in exact
-arithmetic even when locations are duplicated. The initial implementation
-still requires at least two distinct locations because a spatial scale cannot
-be learned or meaningfully checked when every distance is zero.
+When the nugget is strictly positive, \(V\) is positive definite in exact
+arithmetic even when locations are duplicated. With \(\tau^2=0\), positive
+definiteness instead depends on the spatial correlation matrix; duplicate
+locations can make it singular. The implementation requires at least two
+distinct locations because a spatial scale cannot be learned or meaningfully
+checked when every distance is zero.
 
 ## Gaussian log-likelihood
 
@@ -137,9 +139,11 @@ Setting (G-08) to zero produces the generalized least-squares estimator
 
 Substituting (G-09) into (G-07) produces the profile log-likelihood
 \(\ell_p(\theta)=\ell\{\widehat\beta(\theta),\theta\}\). SPmodels maximises
-this ordinary maximum likelihood criterion over the logarithms of the three
-positive covariance parameters. Log parameters enforce positivity because
-\(\exp(a)>0\) for every finite \(a\). This is ML, not REML.
+this ordinary maximum likelihood criterion. Every covariance parameter being
+estimated is represented on a logarithmic scale, which enforces positivity
+because \(\exp(a)>0\) for every finite \(a\). A fixed nugget is omitted from
+the optimiser vector and inserted directly into (G-05); this permits the
+boundary model \(\tau^2=0\) without taking \(\log(0)\). This is ML, not REML.
 
 The default starting scale is the median positive pairwise distance. An
 ordinary least-squares residual variance supplies starting variance values,
@@ -184,8 +188,10 @@ propagate uncertainty in \(\widehat\theta\).
 
 ### Approximate covariance-parameter uncertainty
 
-The optimiser works with
-\(\eta=(\log\sigma_s^2,\log\rho,\log\tau^2)^T\). Let \(H_\eta\) be
+When all three covariance parameters are estimated, the optimiser works with
+\(\eta=(\log\sigma_s^2,\log\rho,\log\tau^2)^T\). When the nugget is fixed,
+the corresponding vector is \(\eta=(\log\sigma_s^2,\log\rho)^T\). Let
+\(H_\eta\) be
 the numerical Hessian of the negative profile log-likelihood at the optimum.
 When it is finite and positive definite, the observed-information
 approximation is
@@ -203,7 +209,8 @@ For \(\theta=\exp(\eta)\), the delta-method Jacobian is
 }                                                                  \tag{G-12b}
 \]
 
-The square roots of the diagonal of (G-12b) appear in `summary()`. If
+The square roots of the diagonal of (G-12b) appear in `summary()` for estimated
+parameters. A fixed nugget has no estimated standard error. If
 \(H_\eta\) is not positive definite, they are reported as missing rather than
 created by silently altering the Hessian. These are local large-sample
 approximations and do not include boundary corrections.

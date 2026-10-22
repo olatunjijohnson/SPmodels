@@ -34,8 +34,10 @@ sp_model_table <- function(object, include_smoothness = TRUE) {
     "nugget_variance"
   covariance_values <- object$covariance[covariance_names]
   covariance_se <- sqrt(diag(object$covariance_vcov))[covariance_names]
-  covariance_status <- if (isTRUE(object$covariance_estimated))
-    "estimated" else "fixed"
+  covariance_status <- ifelse(
+    covariance_names %in% .sp_fitted_covariance_names(object),
+    "estimated", "fixed"
+  )
   covariance_units <- rep(NA_character_, length(covariance_names))
   covariance_units[covariance_names == "scale"] <- object$distance_units
   covariance_table <- data.frame(

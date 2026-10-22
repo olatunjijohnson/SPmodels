@@ -8,10 +8,10 @@ vcov.spmodels_fit <- function(object, ...) object$coefficient_vcov
 logLik.spmodels_fit <- function(object, ...) {
   value <- object$log_likelihood
   attr(value, "nobs") <- object$nobs
-  attr(value, "df") <- object$rank + if (object$covariance_estimated) {
-    (if (isTRUE(object$spatial)) 3L else 1L) +
-      length(object$random_variance)
-  } else 0L
+  attr(value, "df") <- object$rank +
+    length(.sp_fitted_covariance_names(object)) +
+    if (isTRUE(object$covariance_estimated))
+      length(object$random_variance) else 0L
   attr(value, "df") <- attr(value, "df") +
     if (isTRUE(object$intervention_estimated)) 2L else 0L
   attr(value, "df") <- attr(value, "df") +
@@ -367,13 +367,19 @@ print.spmodels_fit <- function(x, ...) {
   }
   method <- if (!is.null(x$likelihood_method)) x$likelihood_method else "ML"
   cat("Likelihood method:", method, "\n")
-  cat("Covariance parameters", if (x$covariance_estimated)
-    "(estimated):\n" else "(fixed):\n")
+  covariance_names <- if (isTRUE(x$spatial)) names(x$covariance) else
+    "nugget_variance"
+  estimated_covariance <- .sp_fitted_covariance_names(x)
+  covariance_status <- ifelse(covariance_names %in% estimated_covariance,
+                              "estimated", "fixed")
+  cat("Covariance parameters:\n")
   if (isTRUE(x$spatial)) {
     print(c(x$covariance, smoothness = x$smoothness))
   } else {
     print(x$covariance["nugget_variance"])
   }
+  cat("Status:", paste(paste0(covariance_names, "=", covariance_status),
+                        collapse = ", "), "\n")
   if (length(x$random_variance)) {
     cat("Random-intercept variances:\n")
     print(x$random_variance)
@@ -465,6 +471,8 @@ summary.spmodels_fit <- function(object, ...) {
                  temporal_scale_estimated = object$temporal_scale_estimated,
                  smoothness = object$smoothness,
                  covariance_estimated = object$covariance_estimated,
+                 covariance_estimated_names =
+                   .sp_fitted_covariance_names(object),
                  log_likelihood = stats::logLik(object), nobs = object$nobs,
                  distance_units = object$distance_units,
                  family = object$family,
@@ -497,8 +505,7 @@ print.summary.spmodels_fit <- function(x, ...) {
   stats::printCoefmat(x$coefficients)
   method <- if (!is.null(x$likelihood_method)) x$likelihood_method else "ML"
   cat("\nLikelihood method:", method, "\n")
-  cat("Covariance parameters", if (x$covariance_estimated)
-    "(estimated):\n" else "(fixed):\n")
+  cat("Covariance parameters:\n")
   print(x$covariance_table)
   if (!is.null(x$random_table)) {
     cat("Random-intercept variances:\n")

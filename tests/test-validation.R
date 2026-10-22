@@ -270,6 +270,7 @@ stopifnot(identical(parallel_recovery$simulations, recovery$simulations),
 # the existing multi-scenario recovery runner.
 grid_template <- fit
 grid_template$covariance_estimated <- TRUE
+grid_template$covariance_estimated_names <- names(grid_template$covariance)
 grid_template$control$estimate <- TRUE
 simulation_grid <- sp_simulation_grid(
   grid_template, list(`(Intercept)` = c(1.2, 1.8), scale = c(0.8, 1.6)),

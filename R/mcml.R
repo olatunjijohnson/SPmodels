@@ -7,7 +7,7 @@
 .sp_mcml_intervention <- function(parameters, object) {
   if (!isTRUE(object$intervention_estimated)) return(object$intervention)
   p <- ncol(object$x)
-  covariance_count <- if (object$covariance_estimated) 3L else 0L
+  covariance_count <- length(.sp_fitted_covariance_names(object))
   random_count <- if (object$covariance_estimated)
     length(object$random_variance) else 0L
   random_slope_count <- length(
@@ -25,7 +25,7 @@
 .sp_mcml_temporal_scale <- function(parameters, object) {
   if (!isTRUE(object$temporal_scale_estimated)) return(object$temporal_scale)
   p <- ncol(object$x)
-  covariance_count <- if (object$covariance_estimated) 3L else 0L
+  covariance_count <- length(.sp_fitted_covariance_names(object))
   random_count <- if (object$covariance_estimated)
     length(object$random_variance) else 0L
   random_slope_count <- length(
@@ -42,7 +42,7 @@
   count <- length(parameterization$values)
   if (!count) return(object$random_slope_specification)
   p <- ncol(object$x)
-  covariance_count <- if (object$covariance_estimated) 3L else 0L
+  covariance_count <- length(.sp_fitted_covariance_names(object))
   random_count <- if (object$covariance_estimated)
     length(object$random_variance) else 0L
   start <- p + covariance_count + random_count
@@ -57,7 +57,8 @@
     return(object$random_variance)
   }
   p <- ncol(object$x)
-  indices <- p + 3L + seq_along(object$random_variance)
+  indices <- p + length(.sp_fitted_covariance_names(object)) +
+    seq_along(object$random_variance)
   stats::setNames(exp(parameters[indices]), names(object$random_variance))
 }
 
@@ -65,9 +66,12 @@
                                  distance) {
   p <- ncol(object$x)
   beta <- parameters[seq_len(p)]
+  covariance_names <- .sp_fitted_covariance_names(object)
   covariance <- if (object$covariance_estimated) {
-    stats::setNames(exp(parameters[p + seq_len(3L)]),
-                    names(object$covariance))
+    answer <- object$covariance
+    answer[covariance_names] <-
+      exp(parameters[p + seq_along(covariance_names)])
+    answer
   } else object$covariance
   random_variance <- .sp_mcml_random_variance(parameters, object)
   random_slope_specification <- .sp_mcml_random_slope(parameters, object)
@@ -351,8 +355,10 @@ sp_mcml <- function(object, control = sp_mcml_control(), seed = NULL,
     object$random_slope_specification
   )
   random_slope_count <- length(random_slope_parameterization$values)
+  covariance_names <- .sp_fitted_covariance_names(object)
+  covariance_count <- length(covariance_names)
   parameter_start <- c(object$coefficients,
-    if (object$covariance_estimated) log(object$covariance) else NULL,
+    if (covariance_count) log(object$covariance[covariance_names]) else NULL,
     if (object$covariance_estimated && length(object$random_variance))
       log(object$random_variance) else NULL,
     random_slope_parameterization$values,
@@ -362,8 +368,7 @@ sp_mcml <- function(object, control = sp_mcml_control(), seed = NULL,
       c(stats::qlogis(object$intervention$alpha),
         log(object$intervention$decay)) else NULL)
   names(parameter_start) <- c(names(object$coefficients),
-    if (object$covariance_estimated)
-      paste0("log_", names(object$covariance)) else NULL,
+    if (covariance_count) paste0("log_", covariance_names) else NULL,
     if (object$covariance_estimated && length(object$random_variance))
       paste0("log_random::", names(object$random_variance)) else NULL,
     random_slope_parameterization$names,
@@ -417,21 +422,27 @@ sp_mcml <- function(object, control = sp_mcml_control(), seed = NULL,
   positive_distances <- distance[upper.tri(distance) & distance > 0]
   lower <- rep(-Inf, length(parameter_start))
   upper <- rep(Inf, length(parameter_start))
-  if (object$covariance_estimated) {
-    lower[p + seq_len(3L)] <- log(c(
-      1e-7, min(positive_distances) * 1e-4, 1e-7
-    ))
-    upper[p + seq_len(3L)] <- log(c(
-      1e5, max(positive_distances) * 1e4, 1e5
-    ))
+  if (covariance_count) {
+    covariance_indices <- p + seq_len(covariance_count)
+    lower[covariance_indices] <- log(c(
+      spatial_variance = 1e-7,
+      scale = min(positive_distances) * 1e-4,
+      nugget_variance = 1e-7
+    )[covariance_names])
+    upper[covariance_indices] <- log(c(
+      spatial_variance = 1e5,
+      scale = max(positive_distances) * 1e4,
+      nugget_variance = 1e5
+    )[covariance_names])
     if (length(object$random_variance)) {
-      random_indices <- p + 3L + seq_along(object$random_variance)
+      random_indices <- p + covariance_count +
+        seq_along(object$random_variance)
       lower[random_indices] <- log(1e-7)
       upper[random_indices] <- log(1e5)
     }
   }
   if (random_slope_count) {
-    slope_start <- p + (if (object$covariance_estimated) 3L else 0L) +
+    slope_start <- p + covariance_count +
       (if (object$covariance_estimated) length(object$random_variance) else 0L)
     cursor <- 0L
     for (details in random_slope_parameterization$components) {
@@ -446,7 +457,7 @@ sp_mcml <- function(object, control = sp_mcml_control(), seed = NULL,
     }
   }
   if (isTRUE(object$temporal_scale_estimated)) {
-    temporal_index <- p + (if (object$covariance_estimated) 3L else 0L) +
+    temporal_index <- p + covariance_count +
       (if (object$covariance_estimated) length(object$random_variance) else 0L) +
       random_slope_count + 1L
     temporal_lag <- .sp_temporal_lag(object$temporal_values)
@@ -457,7 +468,7 @@ sp_mcml <- function(object, control = sp_mcml_control(), seed = NULL,
       max(positive_time) * 1e4 else object$temporal_scale * 1e4)
   }
   intervention_indices <- if (isTRUE(object$intervention_estimated)) {
-    p + (if (object$covariance_estimated) 3L else 0L) +
+    p + covariance_count +
       (if (object$covariance_estimated) length(object$random_variance) else 0L) +
       random_slope_count +
       (if (isTRUE(object$temporal_scale_estimated)) 1L else 0L) +
@@ -496,10 +507,11 @@ sp_mcml <- function(object, control = sp_mcml_control(), seed = NULL,
   }
   beta <- stats::setNames(optimisation$par[seq_len(p)],
                           names(object$coefficients))
-  covariance <- if (object$covariance_estimated) {
-    stats::setNames(exp(optimisation$par[p + seq_len(3L)]),
-                    names(object$covariance))
-  } else object$covariance
+  covariance <- object$covariance
+  if (covariance_count) {
+    covariance[covariance_names] <-
+      exp(optimisation$par[p + seq_len(covariance_count)])
+  }
   random_variance <- .sp_mcml_random_variance(optimisation$par, object)
   random_slope_specification <- .sp_mcml_random_slope(
     optimisation$par, object
@@ -550,16 +562,15 @@ sp_mcml <- function(object, control = sp_mcml_control(), seed = NULL,
   dimnames(coefficient_vcov) <- list(names(beta), names(beta))
   covariance_vcov <- matrix(NA_real_, 3L, 3L,
     dimnames = list(names(covariance), names(covariance)))
-  if (object$covariance_estimated && all(is.finite(parameter_vcov))) {
-    log_indices <- p + seq_len(3L)
-    jacobian <- diag(unname(covariance), 3L)
-    covariance_vcov <- jacobian %*%
+  if (covariance_count && all(is.finite(parameter_vcov))) {
+    log_indices <- p + seq_len(covariance_count)
+    jacobian <- diag(unname(covariance[covariance_names]), covariance_count)
+    covariance_vcov[covariance_names, covariance_names] <- jacobian %*%
       parameter_vcov[log_indices, log_indices, drop = FALSE] %*% jacobian
-    dimnames(covariance_vcov) <- list(names(covariance), names(covariance))
   }
   random_variance_vcov <- object$random_variance_vcov
   if (object$covariance_estimated && length(random_variance)) {
-    random_indices <- p + 3L + seq_along(random_variance)
+    random_indices <- p + covariance_count + seq_along(random_variance)
     random_variance_vcov <- matrix(
       NA_real_, length(random_variance), length(random_variance),
       dimnames = list(names(random_variance), names(random_variance))
@@ -581,7 +592,7 @@ sp_mcml <- function(object, control = sp_mcml_control(), seed = NULL,
     dimnames = list(names(random_slope_values), names(random_slope_values))
   )
   if (random_slope_count && all(is.finite(parameter_vcov))) {
-    slope_start <- p + (if (object$covariance_estimated) 3L else 0L) +
+    slope_start <- p + covariance_count +
       (if (object$covariance_estimated) length(object$random_variance) else 0L)
     slope_indices <- slope_start + seq_len(random_slope_count)
     slope_jacobian <- .sp_random_slope_natural_jacobian(
@@ -595,7 +606,7 @@ sp_mcml <- function(object, control = sp_mcml_control(), seed = NULL,
   }
   temporal_scale_se <- object$temporal_scale_se
   if (isTRUE(object$temporal_scale_estimated)) {
-    temporal_index <- p + (if (object$covariance_estimated) 3L else 0L) +
+    temporal_index <- p + covariance_count +
       (if (object$covariance_estimated) length(object$random_variance) else 0L) +
       random_slope_count + 1L
     temporal_variance <- parameter_vcov[temporal_index, temporal_index]
@@ -779,9 +790,11 @@ sp_mcml_replicates <- function(object, nrep = 3L,
       rowSums(abs(slope_jacobian)) > 0 else rep(FALSE, length(slope_values))
     c(stats::setNames(fit$coefficients,
                       paste0("mean::", names(fit$coefficients))),
-      if (isTRUE(fit$covariance_estimated)) stats::setNames(
-        fit$covariance, paste0("covariance::", names(fit$covariance))
-      ) else numeric(),
+      if (isTRUE(fit$covariance_estimated)) {
+        covariance_names <- .sp_fitted_covariance_names(fit)
+        stats::setNames(fit$covariance[covariance_names],
+                        paste0("covariance::", covariance_names))
+      } else numeric(),
       if (isTRUE(fit$covariance_estimated) && length(fit$random_variance))
         stats::setNames(fit$random_variance,
                         paste0("random::", names(fit$random_variance))) else
@@ -808,8 +821,9 @@ sp_mcml_replicates <- function(object, nrep = 3L,
     estimated_slope <- if (ncol(slope_jacobian))
       rowSums(abs(slope_jacobian)) > 0 else logical(nrow(slope_jacobian))
     diagonal_derivative <- c(rep(1, length(fit$coefficients)),
-      if (isTRUE(fit$covariance_estimated)) unname(fit$covariance) else
-        numeric(),
+      if (isTRUE(fit$covariance_estimated))
+        unname(fit$covariance[.sp_fitted_covariance_names(fit)]) else
+          numeric(),
       if (isTRUE(fit$covariance_estimated) && length(fit$random_variance))
         unname(fit$random_variance) else numeric())
     leading_count <- length(diagonal_derivative)

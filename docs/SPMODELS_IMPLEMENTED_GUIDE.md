@@ -2,7 +2,7 @@
 title: "SPmodels: Guide to the Implemented Package"
 subtitle: "What works now, how it works, and what comes next"
 author: "Olatunji Johnson"
-date: "16 October 2026"
+date: "22 October 2026"
 lang: en-GB
 documentclass: article
 classoption: 12pt
@@ -503,14 +503,38 @@ Its arguments are:
 | `spatial_variance` | automatic | Starting value for \(\sigma_s^2\), or fixed value |
 | `scale` | automatic | Starting value for \(\rho\), or fixed value |
 | `nugget_variance` | automatic | Starting value for \(\tau^2\), or fixed value |
-| `estimate` | `TRUE` | Estimate all three covariance parameters? |
+| `estimate` | `TRUE` | Estimate spatial scale/variance and supported additional variance components? |
+| `estimate_nugget` | automatic | Estimate the nugget, or hold the supplied value fixed? |
 | `distance_units` | `NULL` | Units used for model distances and reported covariance scales, such as `"m"` or `"km"` |
 | `maxit` | `500` | Maximum optimiser iterations |
 | `reltol` | `1e-8` | Optimisation tolerance |
 
-Matérn smoothness is fixed in this implementation. When `estimate = TRUE`, the
-other three covariance parameters are estimated jointly. Values supplied for
-them are starting values.
+Matérn smoothness is fixed in this implementation. With the defaults,
+`estimate = TRUE` estimates spatial variance, scale and nugget jointly. A
+positive `nugget_variance` is a starting value unless
+`estimate_nugget = FALSE` is also supplied.
+
+Supplying `nugget_variance = 0` holds the nugget exactly at zero while spatial
+variance and scale are estimated. Zero is a boundary value, so it is not put
+on the optimiser's logarithmic parameter scale:
+
+```r
+no_nugget_control <- sp_control(
+  nugget_variance = 0,
+  distance_units = "km"
+)
+```
+
+To hold a positive nugget fixed while estimating the other covariance
+components, be explicit:
+
+```r
+known_nugget_control <- sp_control(
+  nugget_variance = 0.2,
+  estimate_nugget = FALSE,
+  distance_units = "km"
+)
+```
 
 When `estimate = FALSE`, all three must be supplied and are treated as known:
 

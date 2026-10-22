@@ -1,0 +1,8 @@
+^\.git$
+^\.github$
+^\.gitignore$
+^AGENTS\.md$
+^docs$
+^LICENSE-MIT$
+^SPmodels_[0-9.]+\.tar\.gz$
+^SPmodels\.Rcheck$

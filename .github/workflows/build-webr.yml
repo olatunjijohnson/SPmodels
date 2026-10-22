@@ -7,6 +7,8 @@ on:
       - 'DESCRIPTION'
       - 'NAMESPACE'
       - 'R/**'
+      - 'tools/webr-smoke.mjs'
+      - 'docs/WEBR_INDEX.html'
       - '.github/workflows/build-webr.yml'
   workflow_dispatch:
 

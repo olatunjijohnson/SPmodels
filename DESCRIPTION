@@ -1,7 +1,7 @@
 Package: SPmodels
 Type: Package
 Title: Spatial Models for Research and Teaching
-Version: 0.1.0
+Version: 0.1.1
 Authors@R: person(given = "Olatunji", family = "Johnson",
     email = "olatunjijohnson21111@gmail.com", role = c("aut", "cre"))
 Description: Independently implemented spatial modelling methods with a

@@ -41,7 +41,7 @@ where \(o_i\) is a known offset and
 \]
 
 The coordinates are projected, both axes use the recorded distance unit,
-\(\sigma^2>0\), \(\phi>0\), \(\tau^2>0\), and the smoothness \(\nu>0\) is
+\(\sigma^2>0\), \(\phi>0\), \(\tau^2\geq0\), and the smoothness \(\nu>0\) is
 fixed. The mean design has full column rank. Write
 \(\boldsymbol y_o=\boldsymbol y-\boldsymbol o\) and let
 \(V_{ij}=\operatorname{Cov}(y_i,y_j)\). Thus
@@ -142,9 +142,11 @@ Substitution gives the profiled approximate log likelihood
  \widehat{\boldsymbol\beta})^2}{d_i}\right\}.              \tag{NL-11}
 \]
 
-The positive covariance parameters are optimized on their log scales with
-bounded L-BFGS-B. The conditional coefficient covariance reported at the final
-state is
+The covariance parameters being estimated are optimized on their log scales
+with bounded L-BFGS-B. A fixed nugget is excluded from the optimiser vector,
+which permits \(\tau^2=0\); the resulting local covariance systems must still
+be positive definite. The conditional coefficient covariance reported at the
+final state is
 
 \[
  \widehat{\operatorname{Var}}(\widehat{\boldsymbol\beta}\mid

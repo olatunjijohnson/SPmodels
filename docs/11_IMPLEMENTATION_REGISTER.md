@@ -66,7 +66,7 @@ feature inventory in `02_FEATURE_INVENTORY.md` remains in scope.
 | Exact boundary | Retaining every predecessor reproduces the dense Gaussian log likelihood, regression estimate and conditional coefficient covariance to floating-point precision for any tested valid order |
 | Storage boundary | Graph storage is `O(nm)` and local covariance workspace is `O(m^2)`; exact neighbor discovery remains `O(n^2)` time and the current R local factorizations are not claimed faster than dense BLAS |
 | Prediction | Each new point conditions on its nearest training observations; latent/future-observation marginal uncertainty is returned without inventing a joint covariance |
-| Supported model | Gaussian identity-link stationary isotropic Matérn plus nugget, with fixed smoothness; fixed or jointly estimated covariance parameters |
+| Supported model | Gaussian identity-link stationary isotropic Matérn plus optional nugget, with fixed smoothness; covariance parameters may be fixed or estimated, and the nugget may independently be held at any non-negative value |
 | Explicit exclusions | Non-Gaussian, grouped, random-slope and temporal covariance models; production-budget recommendation pending the predeclared NNL study |
 | Owning module | `R/neighbor-fit.R` |
 | Derivation | `docs/derivations/20_GAUSSIAN_NEAREST_PREDECESSOR_LIKELIHOOD.md`, equations NL-01--NL-15 |

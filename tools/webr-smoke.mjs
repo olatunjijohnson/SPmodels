@@ -105,6 +105,25 @@ try {
     stopifnot(length(prediction$fit) == 1L, is.finite(prediction$se.fit))
     stopifnot(!getFromNamespace(".sp_has_fork_workers", "SPmodels")())
 
+    zero_nugget_fit <- sp_fit(
+      response ~ exposure,
+      data = dat,
+      coords = ~ east + north,
+      control = sp_control(
+        spatial_variance = 1.4,
+        scale = 1.7,
+        nugget_variance = 0,
+        distance_units = "km",
+        maxit = 100
+      )
+    )
+    stopifnot(
+      identical(unname(zero_nugget_fit$covariance[["nugget_variance"]]), 0),
+      identical(zero_nugget_fit$covariance_estimated_names,
+                c("spatial_variance", "scale")),
+      !"log_nugget_variance" %in% names(zero_nugget_fit$optimisation$par)
+    )
+
     conditional_variogram <- sp_variogram(
       fit, residual_type = "conditional", bins = 3
     )

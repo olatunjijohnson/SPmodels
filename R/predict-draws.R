@@ -225,6 +225,8 @@
 .sp_parameter_specification <- function(object) {
   beta <- object$coefficients
   p <- length(beta)
+  covariance_names <- .sp_fitted_covariance_names(object)
+  covariance_count <- length(covariance_names)
   if (object$family$family != "gaussian" &&
       !is.null(object$parameter_vcov)) {
     covariance <- object$parameter_vcov
@@ -240,8 +242,8 @@
     )
     random_slope_count <- length(random_slope_parameterization$values)
     temporal_count <- if (isTRUE(object$temporal_scale_estimated)) 1L else 0L
-    values <- c(beta, if (object$covariance_estimated)
-      log(object$covariance) else NULL,
+    values <- c(beta, if (covariance_count)
+      log(object$covariance[covariance_names]) else NULL,
       if (random_count) log(object$random_variance) else NULL,
       random_slope_parameterization$values,
       if (temporal_count) log(object$temporal_scale) else NULL,
@@ -254,16 +256,14 @@
            call. = FALSE)
     }
     return(list(values = values, covariance = covariance, beta_count = p,
-                covariance_count = if (object$covariance_estimated) 3L else 0L,
+                covariance_count = covariance_count,
+                covariance_names = covariance_names,
                 random_count = random_count,
                 random_slope_count = random_slope_count,
                 random_slope_parameterization = random_slope_parameterization,
                 temporal_count = temporal_count,
                 intervention_count = intervention_count))
   }
-  covariance_count <- if (object$covariance_estimated) {
-    if (isTRUE(object$spatial)) 3L else 1L
-  } else 0L
   temporal_count <- if (isTRUE(object$temporal_scale_estimated)) 1L else 0L
   random_count <- if (isTRUE(object$covariance_estimated))
     length(object$random_variance) else 0L
@@ -275,8 +275,6 @@
   covariance <- object$coefficient_vcov
   if (covariance_count + random_count + temporal_count +
       random_slope_count > 0L) {
-    covariance_names <- if (isTRUE(object$spatial)) names(object$covariance) else
-      "nugget_variance"
     random_names <- if (random_count)
       paste0("random::", names(object$random_variance)) else character()
     variance_names <- c(covariance_names, random_names,
@@ -296,7 +294,17 @@
     total_count <- base_count + random_slope_count
     transformed_vcov <- if (random_slope_count &&
       !is.null(object$transformed_parameter_vcov)) {
-      object$transformed_parameter_vcov
+      transformed_names <- c(
+        paste0("log_", covariance_names),
+        if (random_count)
+          paste0("log_random::", names(object$random_variance)) else
+            character(),
+        random_slope_parameterization$names,
+        if (temporal_count) "log_temporal_scale" else character()
+      )
+      object$transformed_parameter_vcov[
+        transformed_names, transformed_names, drop = FALSE
+      ]
     } else {
       inverse_jacobian <- diag(1 / unname(covariance_values), base_count)
       inverse_jacobian %*% covariance_vcov %*% inverse_jacobian
@@ -317,7 +325,8 @@
          call. = FALSE)
   }
   list(values = values, covariance = covariance, beta_count = p,
-       covariance_count = covariance_count, random_count = random_count,
+       covariance_count = covariance_count,
+       covariance_names = covariance_names, random_count = random_count,
        random_slope_count = random_slope_count,
        random_slope_parameterization = random_slope_parameterization,
        temporal_count = temporal_count,
@@ -330,9 +339,7 @@
   answer$coefficients <- stats::setNames(parameters[seq_len(p)],
                                          names(object$coefficients))
   if (specification$covariance_count > 0L) {
-    covariance_names <- if (isTRUE(object$spatial)) names(object$covariance) else
-      "nugget_variance"
-    answer$covariance[covariance_names] <- exp(
+    answer$covariance[specification$covariance_names] <- exp(
       parameters[p + seq_len(specification$covariance_count)]
     )
   }
